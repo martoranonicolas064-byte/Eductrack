@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EducTrack — Login Docente</title>
+  <script src="../security.js"></script>
+  <meta name="description" content="Iniciá sesión en EducTrack como docente o estudiante." />
+
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ── Toast de estado de red ──────────────────────────────── -->
+  <div class="net-toast" id="netToast" role="status" aria-live="polite" aria-atomic="true">
+    <span class="net-icon" id="netIcon" aria-hidden="true"></span>
+    <span class="net-msg" id="netMsg"></span>
+  </div>
+
+  <!-- ── Contenedor principal ────────────────────────────────── -->
+  <div class="screen">
+    <div class="card" id="mainCard">
+
+      <!-- Imagen superior -->
+      <div class="card-image">
+        <img src="classroom.png" alt="Aula con pizarrón, lápices y flores" id="headerImg" />
+      </div>
+
+      <!-- Cuerpo del formulario -->
+      <div class="card-body" id="cardBody">
+        <h1 class="brand-title">EDUCTRACK</h1>
+        <p class="brand-sub">ingresa tus datos para continuar</p>
+
+        <!-- Selector de rol -->
+        <div class="tab-row" role="group" aria-label="Tipo de usuario">
+          <button
+            class="tab active"
+            id="tabDocentes"
+            aria-pressed="true"
+            type="button"
+          >
+            <svg class="tab-check" width="13" height="13" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="3"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Docentes
+          </button>
+          <a
+            href="estudiantes.html"
+            class="tab"
+            id="tabEstudiantes"
+            aria-pressed="false"
+          >
+            <svg class="tab-check" width="13" height="13" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="3"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Estudiantes
+          </a>
+        </div>
+
+        <!-- Formulario -->
+        <form class="login-form" id="loginForm" novalidate autocomplete="off">
+
+          <!-- Campo: Nombre de usuario -->
+          <div class="field-group" id="grpUsername">
+            <label class="field-label" for="usernameInput">Nombre de usuario</label>
+            <div class="field-wrap">
+              <!-- Ícono usuario -->
+              <svg class="field-icon" width="19" height="19" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              <input
+                type="text"
+                id="usernameInput"
+                name="username"
+                class="field-input"
+                placeholder="Ingrese su usuario"
+                autocomplete="username"
+                aria-describedby="usernameErr"
+                required
+              />
+              <!-- Tick de validación -->
+              <span class="field-tick" id="usernameTick" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="3"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </span>
+            </div>
+            <span class="field-err" id="usernameErr" role="alert" aria-live="polite"></span>
+          </div>
+
+          <!-- Campo: Contraseña -->
+          <div class="field-group" id="grpPassword">
+            <label class="field-label" for="passwordInput">Contraseña</label>
+            <div class="field-wrap">
+              <!-- Ícono llave -->
+              <svg class="field-icon" width="19" height="19" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+              </svg>
+              <input
+                type="password"
+                id="passwordInput"
+                name="password"
+                class="field-input has-toggle"
+                placeholder="Ingrese su contraseña"
+                autocomplete="current-password"
+                aria-describedby="passwordErr"
+                required
+              />
+              <!-- Botón ojo: mostrar / ocultar contraseña -->
+              <button
+                type="button"
+                class="eye-btn"
+                id="eyeBtn"
+                aria-label="Mostrar contraseña"
+                aria-pressed="false"
+                tabindex="0"
+              >
+                <!-- Ojo abierto -->
+                <svg class="eye-open" width="17" height="17" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="1.9"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <!-- Ojo cerrado (oculto por defecto) -->
+                <svg class="eye-closed" width="17" height="17" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" stroke-width="1.9"
+                  stroke-linecap="round" stroke-linejoin="round"
+                  aria-hidden="true" style="display:none">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+            <span class="field-err" id="passwordErr" role="alert" aria-live="polite"></span>
+          </div>
+
+          <!-- Botón enviar -->
+          <button type="submit" class="btn-submit" id="btnSubmit">
+            <span class="btn-label">iniciar sesion</span>
+            <span class="btn-spinner" aria-hidden="true"></span>
+          </button>
+
+          <div style="text-align: center;">
+            <a href="../admin-login.html" class="link-admin-login">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              iniciar sesion como administrador
+            </a>
+          </div>
+
+        </form>
+      </div><!-- /card-body -->
+    </div><!-- /card -->
+  </div><!-- /screen -->
+
+  <script src="app.js"></script>
+</body>
+</html>

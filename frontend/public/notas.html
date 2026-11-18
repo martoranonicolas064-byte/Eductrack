@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EducTrack — Planilla de Calificaciones</title>
+<script src="security.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --bg-page: #120304;
+    --wine-900: #250406;
+    --wine-700: #54080a;
+    --red-600: #8a1014;
+    --red-500: #b01c1c;
+    --coral: #ff3b3b;
+    --card-border: rgba(255, 69, 69, 0.28);
+    --text: #ffffff;
+    --text-soft: rgba(255, 255, 255, 0.75);
+    --grid-line: rgba(255, 255, 255, 0.22);
+    --green: #12b45a;
+    --font-main: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-page);
+    background-image: 
+      radial-gradient(ellipse at 50% 15%, rgba(176, 28, 28, 0.35) 0%, transparent 65%),
+      radial-gradient(circle at 85% 85%, rgba(138, 16, 20, 0.2) 0%, transparent 60%);
+    font-family: var(--font-main);
+    color: var(--text);
+    padding: 16px 12px;
+  }
+
+  /* Contenedor Adaptativo */
+  .app {
+    width: 100%;
+    max-width: 440px;
+    min-height: 720px;
+    border-radius: 26px;
+    border: 2px solid var(--card-border);
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--red-600) 0%, var(--wine-700) 45%, var(--wine-900) 100%);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75), 0 0 35px rgba(176, 28, 28, 0.25);
+    display: flex;
+    flex-direction: column;
+    transition: max-width 0.3s ease;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: linear-gradient(180deg, #b01c1c, #8a1014);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    gap: 10px;
+  }
+
+  .back-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .back-btn:hover {
+    background: rgba(255, 255, 255, 0.28);
+    transform: translateX(-2px);
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-align: center;
+  }
+
+  .course-badge {
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 5px 12px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .course-badge .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+  }
+
+  /* Contenido */
+  main {
+    padding: 20px 18px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    flex: 1;
+  }
+
+  .title-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .title {
+    font-size: 1.45rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  /* Selector de Cuatrimestres (Tabs) */
+  .periodo-tabs {
+    display: inline-flex;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 4px;
+    gap: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+
+  .periodo-tab {
+    background: transparent;
+    color: var(--text-soft);
+    border: none;
+    border-radius: 10px;
+    padding: 8px 16px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .periodo-tab:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .periodo-tab.active {
+    background: var(--coral);
+    color: #1a0304;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(255, 59, 59, 0.35);
+  }
+
+  .periodo-tab i {
+    font-size: 0.85rem;
+  }
+
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--coral);
+    color: #1a0304;
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 7px 12px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  }
+  .stepper button {
+    background: rgba(0, 0, 0, 0.15);
+    border: 0;
+    color: #1a0304;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .stepper button:hover { background: rgba(0, 0, 0, 0.3); }
+  .stepper output { min-width: 16px; text-align: center; font-weight: 900; }
+
+  /* Envoltura de la Tabla con Scroll Horizontal Responsivo */
+  .table-wrap {
+    border-radius: 18px;
+    overflow-x: auto;
+    background: radial-gradient(ellipse at center, rgba(160, 20, 25, 0.85) 0%, rgba(90, 8, 12, 0.95) 75%);
+    box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0,0,0,0.3);
+    border: 1px solid var(--card-border);
+  }
+
+  table {
+    width: 100%;
+    min-width: 360px;
+    border-collapse: collapse;
+    text-align: center;
+  }
+
+  th {
+    background: rgba(18, 1, 3, 0.85);
+    color: var(--text);
+    font-weight: 800;
+    font-size: 0.82rem;
+    padding: 10px 8px;
+    border: 1px solid var(--grid-line);
+    letter-spacing: 0.3px;
+  }
+
+  th.th-student {
+    text-align: left;
+    padding-left: 12px;
+    min-width: 140px;
+  }
+
+  td {
+    border: 1px solid var(--grid-line);
+    height: 38px;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  td.td-name {
+    text-align: left;
+    font-weight: 700;
+    padding-left: 12px;
+    white-space: nowrap;
+  }
+
+  td[contenteditable="true"] {
+    background: rgba(0, 0, 0, 0.2);
+    cursor: text;
+    transition: background 0.15s;
+  }
+  td[contenteditable="true"]:focus {
+    outline: 2px solid var(--coral);
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  td.td-promedio {
+    font-weight: 900;
+    color: #00e600;
+    background: rgba(0, 0, 0, 0.35);
+  }
+
+  /* Panel inferior con métricas y guardado */
+  .panel {
+    border-radius: 18px;
+    background: rgba(45, 5, 8, 0.7);
+    border: 1px solid var(--card-border);
+    padding: 16px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .panel-stats {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+  }
+  .panel-stats strong { color: var(--coral); }
+
+  .btn-guardar {
+    background: var(--green);
+    color: #fff;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-guardar:hover {
+    background: #15d169;
+    transform: translateY(-1px);
+  }
+
+  /* ==========================================================================
+     BREAKPOINTS RESPONSIVOS: TABLET Y ESCRITORIO
+     ========================================================================== */
+  @media (min-width: 768px) {
+    body { padding: 28px 20px; }
+    .app {
+      max-width: 1040px;
+      border-radius: 30px;
+    }
+    .header { padding: 18px 28px; }
+    .header h1 { font-size: 1.8rem; }
+    main { padding: 26px 28px 30px; gap: 22px; }
+    .title { font-size: 1.7rem; }
+    th { font-size: 0.9rem; padding: 12px 10px; }
+    td { font-size: 0.92rem; height: 42px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="header">
+    <a href="profe.html" class="back-btn" title="Volver al panel principal">
+      <i class="fa-solid fa-arrow-left"></i> Panel
+    </a>
+    <h1>Notas</h1>
+    <div class="course-badge">
+      <span class="dot"></span>
+      <span id="labelCursoNotas">4B • Matemáticas</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="title-area">
+      <h2 class="title">Planilla de Calificaciones</h2>
+      <div class="controls">
+        <div class="periodo-tabs" role="tablist" aria-label="Seleccionar cuatrimestre">
+          <button type="button" class="periodo-tab active" id="tabCuatrimestre1" role="tab" aria-selected="true" data-period="1">
+            <i class="fa-solid fa-calendar-check"></i> 1° Cuatrimestre
+          </button>
+          <button type="button" class="periodo-tab" id="tabCuatrimestre2" role="tab" aria-selected="false" data-period="2">
+            <i class="fa-solid fa-calendar-check"></i> 2° Cuatrimestre
+          </button>
+        </div>
+
+        <div class="stepper" role="group" aria-label="Cantidad de columnas de evaluación">
+          <span>Evaluaciones</span>
+          <button type="button" id="minus" aria-label="Quitar evaluación">−</button>
+          <output id="count">3</output>
+          <button type="button" id="plus" aria-label="Agregar evaluación">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="gradesTable">
+        <thead id="gradesHead"></thead>
+        <tbody id="gradesBody"></tbody>
+      </table>
+    </div>
+
+    <section class="panel" aria-label="Resumen de Calificaciones">
+      <div class="panel-stats">
+        <span>Período: <strong id="statPeriodoNombre">1° Cuatrimestre</strong></span>
+        <span>Promedio del Cuatrimestre: <strong id="statPromedio">8.6</strong></span>
+        <span>Aprobados: <strong id="statAprobados">100%</strong></span>
+      </div>
+      <button class="btn-guardar" id="btnGuardarNotas">
+        <i class="fa-solid fa-floppy-disk"></i> Guardar Calificaciones
+      </button>
+    </section>
+  </main>
+</div>
+
+<script>
+  const STORAGE_KEY = 'educTrack_calificaciones_data';
+
+  // Base de datos de alumnos con notas independientes para cada cuatrimestre
+  const ALUMNOS_DEFECTO = [
+    { id: 1, nombre: "Lucas Benítez", cuatrimestre1: [9.0, 8.5, 9.5], cuatrimestre2: [8.5, 9.0, 10.0] },
+    { id: 2, nombre: "Martina Fernández", cuatrimestre1: [8.0, 7.5, 8.5], cuatrimestre2: [9.0, 8.5, 9.0] },
+    { id: 3, nombre: "Santiago Gómez", cuatrimestre1: [10.0, 9.0, 9.5], cuatrimestre2: [9.5, 9.5, 10.0] },
+    { id: 4, nombre: "Valentina López", cuatrimestre1: [7.0, 8.0, 7.5], cuatrimestre2: [8.0, 7.5, 8.5] },
+    { id: 5, nombre: "Mateo Rodríguez", cuatrimestre1: [8.5, 8.0, 9.0], cuatrimestre2: [7.5, 8.5, 8.0] },
+    { id: 6, nombre: "Agustín Morales", cuatrimestre1: [9.0, 8.5, 9.0], cuatrimestre2: [8.5, 9.0, 9.5] },
+    { id: 7, nombre: "Camila Fernández", cuatrimestre1: [8.5, 9.0, 8.5], cuatrimestre2: [9.0, 9.5, 9.0] }
+  ];
+
+  let alumnos = [];
+  let cuatrimestreActivo = 1; // 1 o 2 (únicamente 2 cuatrimestres, sin Examen Final)
+  let evalCounts = { 1: 3, 2: 3 };
+  const MIN = 1, MAX = 6;
+
+  const thead = document.getElementById('gradesHead');
+  const tbody = document.getElementById('gradesBody');
+  const countOutput = document.getElementById('count');
+  const statPeriodoNombre = document.getElementById('statPeriodoNombre');
+
+  function cargarDatos() {
+    try {
+      const guardado = localStorage.getItem(STORAGE_KEY);
+      if (guardado) {
+        const parsed = JSON.parse(guardado);
+        if (parsed.alumnos && Array.isArray(parsed.alumnos) && parsed.alumnos.length > 0) {
+          alumnos = parsed.alumnos;
+          if (parsed.evalCounts) evalCounts = parsed.evalCounts;
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('[Notas] Error al cargar notas de localStorage:', e);
+    }
+    alumnos = JSON.parse(JSON.stringify(ALUMNOS_DEFECTO));
+  }
+
+  function guardarDatos() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ alumnos, evalCounts }));
+    } catch (e) {
+      console.error('[Notas] No se pudo guardar en localStorage:', e);
+    }
+  }
+
+  function cambiarCuatrimestre(num) {
+    cuatrimestreActivo = num;
+
+    document.querySelectorAll('.periodo-tab').forEach(tab => {
+      const esActivo = parseInt(tab.dataset.period, 10) === num;
+      tab.classList.toggle('active', esActivo);
+      tab.setAttribute('aria-selected', esActivo.toString());
+    });
+
+    if (statPeriodoNombre) {
+      statPeriodoNombre.textContent = `${num}° Cuatrimestre`;
+    }
+
+    renderTable();
+  }
+
+  function renderTable() {
+    const evalCount = evalCounts[cuatrimestreActivo] || 3;
+    countOutput.textContent = evalCount;
+
+    // Encabezados dinámicos para el cuatrimestre activo
+    let headHtml = `<tr>
+      <th style="width:40px">N°</th>
+      <th class="th-student">Estudiante</th>`;
+    for (let c = 1; c <= evalCount; c++) {
+      headHtml += `<th>Eval ${c}</th>`;
+    }
+    headHtml += `<th style="width:85px" title="Promedio del ${cuatrimestreActivo}° Cuatrimestre">Prom. C${cuatrimestreActivo}</th></tr>`;
+    thead.innerHTML = headHtml;
+
+    // Filas de alumnos según cuatrimestre seleccionado
+    tbody.innerHTML = '';
+    let sumaTotalPromedios = 0;
+    let alumnosConNota = 0;
+    let aprobadosCount = 0;
+
+    const propCuatrimestre = `cuatrimestre${cuatrimestreActivo}`;
+
+    alumnos.forEach((al, index) => {
+      const tr = document.createElement('tr');
+      let rowHtml = `<td>${index + 1}</td><td class="td-name">${al.nombre}</td>`;
+
+      if (!al[propCuatrimestre]) {
+        al[propCuatrimestre] = [];
+      }
+
+      let sumaFila = 0;
+      let validNotasFila = 0;
+
+      for (let c = 0; c < evalCount; c++) {
+        const nota = al[propCuatrimestre][c];
+        const val = typeof nota === 'number' ? nota.toFixed(2) : '-';
+        if (typeof nota === 'number') {
+          sumaFila += nota;
+          validNotasFila++;
+        }
+        rowHtml += `<td contenteditable="true" data-row="${index}" data-col="${c}" class="nota-cell" title="Haz clic para editar la nota">${val}</td>`;
+      }
+
+      const promedio = validNotasFila > 0 ? (sumaFila / validNotasFila).toFixed(2) : '-';
+      if (validNotasFila > 0) {
+        const numProm = parseFloat(promedio);
+        sumaTotalPromedios += numProm;
+        alumnosConNota++;
+        if (numProm >= 6.0) aprobadosCount++;
+      }
+
+      rowHtml += `<td class="td-promedio" id="prom-${index}">${promedio}</td>`;
+      tr.innerHTML = rowHtml;
+      tbody.appendChild(tr);
+    });
+
+    // Actualizar métricas del cuatrimestre
+    const promGeneral = alumnosConNota > 0 ? (sumaTotalPromedios / alumnosConNota).toFixed(2) : '-';
+    const porcAprobados = alumnosConNota > 0 ? Math.round((aprobadosCount / alumnosConNota) * 100) : 100;
+
+    document.getElementById('statPromedio').textContent = promGeneral;
+    document.getElementById('statAprobados').textContent = `${porcAprobados}%`;
+  }
+
+  function actualizarEstadisticasGenerales() {
+    const propCuatrimestre = `cuatrimestre${cuatrimestreActivo}`;
+    const evalCount = evalCounts[cuatrimestreActivo] || 3;
+    let sumaTotal = 0;
+    let alumnosConNota = 0;
+    let aprobados = 0;
+
+    alumnos.forEach((al) => {
+      let suma = 0, count = 0;
+      const notas = al[propCuatrimestre] || [];
+      for (let c = 0; c < evalCount; c++) {
+        if (typeof notas[c] === 'number') {
+          suma += notas[c];
+          count++;
+        }
+      }
+      if (count > 0) {
+        const prom = suma / count;
+        sumaTotal += prom;
+        alumnosConNota++;
+        if (prom >= 6.0) aprobados++;
+      }
+    });
+
+    const promFinal = alumnosConNota > 0 ? (sumaTotal / alumnosConNota).toFixed(2) : '-';
+    const porcAprobados = alumnosConNota > 0 ? Math.round((aprobados / alumnosConNota) * 100) : 100;
+
+    document.getElementById('statPromedio').textContent = promFinal;
+    document.getElementById('statAprobados').textContent = `${porcAprobados}%`;
+  }
+
+  // ── Edición interactiva de notas en tiempo real ────────────────────
+  tbody.addEventListener('blur', (e) => {
+    if (e.target.classList.contains('nota-cell')) {
+      const row = parseInt(e.target.dataset.row, 10);
+      const col = parseInt(e.target.dataset.col, 10);
+      const rawText = e.target.textContent.trim().replace(',', '.');
+      const val = parseFloat(rawText);
+      const propCuatrimestre = `cuatrimestre${cuatrimestreActivo}`;
+
+      if (!alumnos[row][propCuatrimestre]) {
+        alumnos[row][propCuatrimestre] = [];
+      }
+
+      if (!isNaN(val) && val >= 1 && val <= 10) {
+        alumnos[row][propCuatrimestre][col] = Math.round(val * 10) / 10;
+        e.target.textContent = alumnos[row][propCuatrimestre][col].toFixed(2);
+      } else if (rawText === '' || rawText === '-') {
+        delete alumnos[row][propCuatrimestre][col];
+        e.target.textContent = '-';
+      } else {
+        const previo = alumnos[row][propCuatrimestre][col];
+        e.target.textContent = typeof previo === 'number' ? previo.toFixed(2) : '-';
+      }
+
+      guardarDatos();
+
+      // Recalcular promedio de la fila para este cuatrimestre
+      const evalCount = evalCounts[cuatrimestreActivo] || 3;
+      let sum = 0, count = 0;
+      for (let c = 0; c < evalCount; c++) {
+        const n = alumnos[row][propCuatrimestre][c];
+        if (typeof n === 'number') {
+          sum += n;
+          count++;
+        }
+      }
+      const nuevoProm = count > 0 ? (sum / count).toFixed(2) : '-';
+      document.getElementById(`prom-${row}`).textContent = nuevoProm;
+
+      actualizarEstadisticasGenerales();
+    }
+  }, true);
+
+  // Stepper para agregar o quitar columnas de evaluación en el cuatrimestre activo
+  document.getElementById('minus').onclick = () => {
+    const cur = evalCounts[cuatrimestreActivo] || 3;
+    if (cur > MIN) {
+      evalCounts[cuatrimestreActivo] = cur - 1;
+      guardarDatos();
+      renderTable();
+    }
+  };
+
+  document.getElementById('plus').onclick = () => {
+    const cur = evalCounts[cuatrimestreActivo] || 3;
+    if (cur < MAX) {
+      evalCounts[cuatrimestreActivo] = cur + 1;
+      guardarDatos();
+      renderTable();
+    }
+  };
+
+  // Botones de cambio de cuatrimestre (1° Cuatrimestre y 2° Cuatrimestre)
+  document.getElementById('tabCuatrimestre1').addEventListener('click', () => cambiarCuatrimestre(1));
+  document.getElementById('tabCuatrimestre2').addEventListener('click', () => cambiarCuatrimestre(2));
+
+  // Guardar Calificaciones
+  document.getElementById('btnGuardarNotas').onclick = () => {
+    guardarDatos();
+    alert(`¡Planilla de calificaciones del ${cuatrimestreActivo}° Cuatrimestre guardada con éxito!`);
+  };
+
+  // Sincronizar contexto del curso activo
+  const curso = sessionStorage.getItem('cursoActivo') || localStorage.getItem('cursoActivo') || '4B';
+  const materia = sessionStorage.getItem('materiaActiva') || localStorage.getItem('materiaActiva') || 'Matemáticas';
+  const labelCurso = document.getElementById('labelCursoNotas');
+  if (labelCurso) labelCurso.textContent = `${curso} • ${materia}`;
+
+  // Inicializar
+  cargarDatos();
+  renderTable();
+</script>
+</body>
+</html>
+

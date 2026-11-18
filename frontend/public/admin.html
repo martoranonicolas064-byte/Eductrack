@@ -1,0 +1,1359 @@
+<!doctype html>
+<html lang="es" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración — EducTrack</title>
+    <script src="security.js"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              blue:    { 400:'#e8a0a0', 500:'#b01c1c', 600:'#7a0f0f', 900:'#4a0808' },
+              purple:  { 400:'#e8a0a0', 600:'#7a0f0f', 900:'#4a0808' },
+              emerald: { 400:'#12b45a', 500:'#0b8a42', 600:'#0a7a3a', 900:'#063d1d' },
+              red:     { 300:'#d06060', 400:'#b01c1c', 500:'#7a0f0f', 900:'#4a0808' },
+              gray:    { 200:'#ffffff', 300:'#e0c0c0', 400:'rgba(255,255,255,0.72)', 500:'rgba(255,255,255,0.45)', 700:'#553333' }
+            }
+          }
+        }
+      }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-page: #1a0505;
+            --red-top: #b01c1c;
+            --red-mid: #7a0f0f;
+            --red-deep: #4a0808;
+            --card: rgba(70, 5, 5, 0.75);
+            --card-border: rgba(0, 0, 0, 0.45);
+            --text: #ffffff;
+            --text-soft: rgba(255, 255, 255, 0.72);
+            --green: #12b45a;
+            --green-dark: #0b8a42;
+            --sidebar-bg: linear-gradient(180deg, #5a0a0a 0%, #2a0507 100%);
+        }
+
+        * {
+            font-family: "Outfit", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-page);
+        }
+
+        /* Sidebar gradient */
+        #sidebar, .md\\:hidden.flex {
+            background: linear-gradient(180deg, #5a0a0a 0%, #2a0507 100%) !important;
+            border-color: rgba(0,0,0,0.4) !important;
+        }
+
+        .nav-item {
+            transition: all 0.2s;
+            color: var(--text-soft);
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: rgba(180, 20, 20, 0.35);
+            border-left: 3px solid var(--red-top);
+            color: var(--text);
+        }
+
+        /* Content area gradient */
+        main.flex-1 {
+            background: linear-gradient(180deg, var(--red-mid) 0%, var(--red-deep) 40%, var(--bg-page) 100%) !important;
+        }
+
+        /* Cards */
+        .admin-card,
+        [class*="bg-[#2a0a0a]"] {
+            background: var(--card) !important;
+            border-color: var(--card-border) !important;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        /* Table headers */
+        [class*="bg-[#3a0808]"] {
+            background: rgba(20, 0, 0, 0.55) !important;
+        }
+
+        /* Stat cards on dashboard */
+        .stat-card-icon {
+            background: rgba(180, 20, 20, 0.3);
+        }
+
+        /* Primary buttons */
+        .btn-primary {
+            background: var(--green);
+            transition: background 0.2s, transform 0.15s;
+        }
+        .btn-primary:hover {
+            background: var(--green-dark);
+            transform: translateY(-1px);
+        }
+
+        /* Modal styling */
+        [class*="bg-[#2a0a0a]"].rounded-2xl,
+        .modal-card-admin {
+            background: linear-gradient(160deg, #b01c1c 0%, #5a0a0a 100%) !important;
+            border: 1px solid rgba(0,0,0,0.4) !important;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.65);
+        }
+
+        /* Inputs */
+        input, select, textarea {
+            background: rgba(20, 0, 0, 0.55) !important;
+            border-color: rgba(0,0,0,0.4) !important;
+            color: var(--text) !important;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--red-top) !important;
+        }
+
+        /* Section headers */
+        .section-subtitle {
+            color: var(--text-soft);
+            font-style: italic;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.25);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.4);
+        }
+
+        /* Hover effects for course cards */
+        .course-card {
+            transition: transform 0.15s, background 0.2s;
+        }
+        .course-card:hover {
+            background: rgba(100, 8, 8, 0.85) !important;
+            transform: translateY(-2px);
+        }
+
+        /* Table row hover */
+        tr:hover {
+            background: rgba(180, 20, 20, 0.15);
+        }
+
+        /* Accent links and highlights */
+        .text-accent { color: #e8a0a0; }
+
+        /* Logout button */
+        .logout-btn {
+            background: rgba(180, 20, 20, 0.2);
+            border: 1px solid rgba(180, 20, 20, 0.3);
+            color: #ff8888;
+            transition: background 0.2s;
+        }
+        .logout-btn:hover {
+            background: rgba(180, 20, 20, 0.4);
+        }
+    </style>
+</head>
+
+<body class="h-full bg-[#1a0505] text-gray-200 overflow-hidden font-sans">
+    <div class="flex h-full flex-col md:flex-row relative">
+
+        <!-- Header Móvil -->
+        <div
+            class="md:hidden flex items-center justify-between bg-[#2a0507] border-b border-red-900/30 p-4 shrink-0 w-full z-20">
+            <div class="flex items-center gap-2">
+                <i data-lucide="shield" class="text-red-400"></i>
+                <h1 class="text-lg font-bold text-red-300">Admin</h1>
+            </div>
+            <button onclick="toggleMobileMenu()" class="text-gray-300 hover:text-white p-2">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <div id="mobile-overlay" onclick="toggleMobileMenu()"
+            class="fixed inset-0 bg-black/60 z-30 hidden md:hidden transition-opacity opacity-0"></div>
+
+        <!-- Sidebar -->
+        <aside id="sidebar"
+            class="fixed md:static inset-y-0 left-0 w-64 bg-[#2a0507] border-r border-red-900/30 flex flex-col shrink-0 z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
+            <div class="p-5 border-b border-red-900/30 flex justify-between items-center bg-[#2a0507]">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-red-700/60 border border-red-500/40 flex items-center justify-center">
+                        <i data-lucide="shield" class="w-5 h-5 text-red-300"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-white tracking-wide">EduTrack</h1>
+                        <span class="text-[10px] text-red-300/70 font-semibold uppercase tracking-wider block">Panel Directivo</span>
+                    </div>
+                </div>
+            </div>
+            <nav class="flex-1 py-4 overflow-y-auto">
+                <button class="nav-item active w-full text-left px-5 py-3 flex items-center gap-3 text-sm font-medium"
+                    data-section="dashboard" onclick="showSection('dashboard')">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </button>
+                <button class="nav-item w-full text-left px-5 py-3 flex items-center gap-3 text-sm font-medium"
+                    data-section="cursos" onclick="showSection('cursos')">
+                    <i data-lucide="book-open" class="w-4 h-4"></i> Cursos
+                </button>
+                <button class="nav-item w-full text-left px-5 py-3 flex items-center gap-3 text-sm font-medium"
+                    data-section="profesores" onclick="showSection('profesores')">
+                    <i data-lucide="graduation-cap" class="w-4 h-4"></i> Profesores
+                </button>
+                <button class="nav-item w-full text-left px-5 py-3 flex items-center gap-3 text-sm font-medium"
+                    data-section="alumnos" onclick="showSection('alumnos')">
+                    <i data-lucide="users" class="w-4 h-4"></i> Alumnos
+                </button>
+            </nav>
+            <div class="p-4 border-t border-red-900/30 mt-auto space-y-2">
+                <button onclick="cerrarSesionAdmin()"
+                    class="w-full py-2.5 bg-red-500/10 hover:bg-red-500/25 text-red-300 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 border border-red-500/20">
+                    <i data-lucide="log-out" class="w-4 h-4"></i> Cerrar Sesión
+                </button>
+            </div>
+        </aside>
+
+        <!-- Contenido -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-8 w-full bg-[#1a0505]">
+
+            <!-- Dashboard -->
+            <section id="sec-dashboard" class="fade-in">
+                <header class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white mb-1">Resumen Administrativo</h2>
+                        <p class="text-gray-400 text-sm">Vista general de la institución y sincronización en la nube</p>
+                    </div>
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-950/70 border border-red-800/40 text-xs text-rose-200">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>SheetBest API Conectada</span>
+                    </div>
+                </header>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-[#2a0a0a] border border-red-900/20 p-6 rounded-xl flex items-center gap-4 cursor-pointer hover:border-red-500/50 transition-all" onclick="showSection('cursos')">
+                        <div class="p-4 bg-red-900/30 rounded-lg"><i data-lucide="book-open"
+                                class="w-8 h-8 text-red-300"></i></div>
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-widest text-gray-400">Cursos</h4>
+                            <p id="stat-cursos" class="text-3xl font-bold text-white">0</p>
+                        </div>
+                    </div>
+                    <div class="bg-[#2a0a0a] border border-emerald-900/20 p-6 rounded-xl flex items-center gap-4 cursor-pointer hover:border-emerald-500/50 transition-all" onclick="showSection('alumnos')">
+                        <div class="p-4 bg-emerald-900/20 rounded-lg"><i data-lucide="users"
+                                class="w-8 h-8 text-emerald-400"></i></div>
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-widest text-gray-400">Alumnos</h4>
+                            <p id="stat-alumnos" class="text-3xl font-bold text-white">0</p>
+                        </div>
+                    </div>
+                    <div class="bg-[#2a0a0a] border border-red-900/20 p-6 rounded-xl flex items-center gap-4 cursor-pointer hover:border-red-500/50 transition-all" onclick="showSection('profesores')">
+                        <div class="p-4 bg-red-900/30 rounded-lg"><i data-lucide="graduation-cap"
+                                class="w-8 h-8 text-red-300"></i></div>
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-widest text-gray-400">Profesores</h4>
+                            <p id="stat-profes" class="text-3xl font-bold text-white">0</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cursos -->
+            <section id="sec-cursos" class="fade-in hidden">
+                <div id="lista-cursos-view">
+                    <header class="mb-6 flex justify-between items-end">
+                        <div>
+                            <h2 class="text-2xl font-bold text-white mb-1">Gestión de Cursos</h2>
+                            <p class="text-gray-400 text-sm">Crea cursos y accede a ellos para gestionar alumnos y
+                                materias</p>
+                        </div>
+                        <button onclick="openModalCurso()"
+                            class="bg-red-700 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-red-900/30">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Nuevo Curso
+                        </button>
+                    </header>
+                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4" id="cursos-grid">
+                        <!-- JS generated: Cards of courses -->
+                    </div>
+                </div>
+
+                <!-- Detalle del Curso -->
+                <div id="detalle-curso-view" class="hidden fade-in">
+                    <header class="mb-6 flex items-center gap-4">
+                        <button onclick="cerrarDetalleCurso()"
+                            class="p-2 bg-[#2a0a0a] border border-red-900/30 rounded-lg hover:border-red-500 hover:text-white text-gray-400 transition">
+                            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                        </button>
+                        <div>
+                            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                                Curso: <span id="detalle-curso-nombre" class="text-red-300"></span>
+                            </h2>
+                            <p class="text-gray-400 text-sm">Administra alumnos, materias y profesores asignados</p>
+                        </div>
+                    </header>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Alumnos del Curso -->
+                        <div class="bg-[#2a0a0a] rounded-xl border border-red-900/20 p-5">
+                            <div class="flex justify-between items-center mb-4 pb-4 border-b border-red-900/20">
+                                <h3 class="text-lg font-bold text-white flex items-center gap-2"><i data-lucide="users"
+                                        class="w-5 h-5 text-emerald-400"></i> Alumnos</h3>
+                            </div>
+                            <div class="overflow-x-auto min-h-[200px]">
+                                <table class="w-full text-xs text-left">
+                                    <thead class="bg-[#3a0808] text-gray-400 uppercase tracking-widest font-bold">
+                                        <tr>
+                                            <th class="p-3">Nombre</th>
+                                            <th class="p-3">Usuario / Pass</th>
+                                            <th class="p-3 text-right">Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="alumnos-curso-tbody" class="divide-y divide-red-900/10 text-gray-300">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Materias del Curso -->
+                        <div class="bg-[#2a0a0a] rounded-xl border border-red-900/20 p-5">
+                            <div class="flex justify-between items-center mb-4 pb-4 border-b border-red-900/20">
+                                <h3 class="text-lg font-bold text-white flex items-center gap-2"><i data-lucide="book"
+                                        class="w-5 h-5 text-red-300"></i> Materias y Profesores</h3>
+                                <button onclick="abrirModalNuevaMateria()"
+                                    class="bg-red-700/30 text-red-200 hover:bg-red-700/50 px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-2 text-xs border border-red-600/30"><i
+                                        data-lucide="plus" class="w-4 h-4"></i> Añadir Materia</button>
+                            </div>
+                            <div class="overflow-x-auto min-h-[200px]">
+                                <table class="w-full text-xs text-left">
+                                    <thead class="bg-[#3a0808] text-gray-400 uppercase tracking-widest font-bold">
+                                        <tr>
+                                            <th class="p-3">Materia</th>
+                                            <th class="p-3">Profesor Asignado</th>
+                                            <th class="p-3 text-right">Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="materias-curso-tbody" class="divide-y divide-red-900/10 text-gray-300">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Profesores -->
+            <section id="sec-profesores" class="fade-in hidden">
+                <header class="mb-6 flex justify-between items-end">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white mb-1">Cuerpo Docente</h2>
+                        <p class="text-gray-400 text-sm">Registra profesores y crea sus credenciales</p>
+                    </div>
+                    <button onclick="openModalProfe()"
+                        class="bg-red-700 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-red-900/30">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i> Nuevo Docente
+                    </button>
+                </header>
+                <div class="bg-[#2a0a0a] rounded-xl border border-red-900/20 overflow-hidden">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-[#3a0808] text-gray-400 text-[10px] uppercase tracking-widest font-bold">
+                            <tr>
+                                <th class="p-4">Nombre Completo</th>
+                                <th class="p-4">Usuario</th>
+                                <th class="p-4">Contraseña</th>
+                                <th class="p-4 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="profes-tbody" class="divide-y divide-red-900/10"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Alumnos -->
+            <section id="sec-alumnos" class="fade-in hidden">
+
+                <header class="mb-6 flex justify-between items-end">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white mb-1">Listado de Alumnos</h2>
+                        <p class="text-gray-400 text-sm">Visualiza todos los alumnos y sus cursos asignados</p>
+                    </div>
+
+                </header>
+                <div class="flex justify-center gap-4 mb-6 pt-2">
+                    <button onclick="openModalOCR()"
+                        class="bg-red-800/30 text-red-200 hover:bg-red-800/50 px-6 py-2.5 rounded-xl font-bold transition flex items-center gap-2 text-sm shadow-sm hover:scale-105 border border-red-700/40">
+                        <i data-lucide="scan-line" class="w-5 h-5 text-red-400"></i> Cargar Foto
+                    </button>
+                    <button onclick="abrirModalAlumno()"
+                        class="bg-emerald-600/20 text-emerald-300 hover:bg-emerald-600/40 px-6 py-2.5 rounded-xl font-bold transition flex items-center gap-2 text-sm shadow-sm hover:scale-105 border border-emerald-500/30">
+                        <i data-lucide="user-plus" class="w-5 h-5 text-emerald-400"></i> Añadir Alumno
+                    </button>
+                </div>
+                <div class="bg-[#2a0a0a] rounded-xl border border-red-900/20 overflow-hidden">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-[#3a0808] text-gray-400 text-[10px] uppercase tracking-widest font-bold">
+                            <tr>
+                                <th class="p-4">Nombre Completo</th>
+                                <th class="p-4">Usuario</th>
+                                <th class="p-4">Contraseña</th>
+                                <th class="p-4">Curso Asignado</th>
+                                <th class="p-4 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alumnos-general-tbody" class="divide-y divide-red-900/10"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal Nuevo Curso -->
+    <div id="modal-curso"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
+        <div class="bg-[#2a0a0a] border border-red-900/30 p-6 rounded-2xl w-full max-w-sm mx-4">
+            <h3 class="text-lg font-bold text-white mb-4">Crear Curso</h3>
+            <div class="mb-4">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-2">Año (Ej: 1º)</label>
+                <input type="text" id="curso-anio"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
+            </div>
+            <div class="mb-4">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-2">División (Ej: A)</label>
+                <input type="text" id="curso-division"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
+            </div>
+            <div class="mb-4">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-2">Turno (Ej: Mañana)</label>
+                <input type="text" id="curso-turno"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="closeModal('modal-curso')"
+                    class="px-4 py-2 text-gray-400 hover:text-white text-sm">Cancelar</button>
+                <button onclick="guardarCurso()"
+                    class="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-lg text-sm font-bold shadow-lg shadow-red-900/40">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nuevo Alumno -->
+    <div id="modal-alumno"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
+        <div class="bg-[#2a0a0a] border border-red-900/30 p-6 rounded-2xl w-full max-w-sm mx-4">
+            <h3 class="text-lg font-bold text-white mb-4">Añadir Alumno</h3>
+            <div class="mb-4">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-2">Curso Asignado</label>
+                <select id="alumno-curso"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-2">Nombre</label>
+                <input type="text" id="alumno-name"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
+            </div>
+            <div class="mb-4">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-2">Apellido</label>
+                <input type="text" id="alumno-surname"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="closeModal('modal-alumno')"
+                    class="px-4 py-2 text-gray-400 hover:text-white text-sm">Cancelar</button>
+                <button onclick="guardarAlumno()"
+                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-bold shadow-lg shadow-emerald-900/40">Añadir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Profesor -->
+    <div id="modal-profe"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
+        <div class="bg-[#2a0a0a] border border-red-900/30 p-6 rounded-2xl w-full max-w-sm mx-4">
+            <h3 class="text-lg font-bold text-white mb-4">Crear Profesor</h3>
+            <div class="mb-4">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-2">Nombre</label>
+                <input type="text" id="profe-nombre"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
+            </div>
+            <div class="mb-4">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-2">Apellido</label>
+                <input type="text" id="profe-apellido"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="closeModal('modal-profe')"
+                    class="px-4 py-2 text-gray-400 hover:text-white text-sm">Cancelar</button>
+                <button onclick="guardarProfe()"
+                    class="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-lg text-sm font-bold shadow-lg shadow-red-900/40">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal OCR (Carga por Foto) -->
+    <div id="modal-ocr"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
+        <div class="bg-[#2a0a0a] border border-red-900/30 p-6 rounded-2xl w-full max-w-md mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-white">Carga Masiva (Foto / Lista)</h3>
+                <button onclick="closeModal('modal-ocr')" class="text-gray-400 hover:text-white"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div class="p-8 border-2 border-dashed border-red-900/40 rounded-xl text-center hover:border-red-500/60 transition-colors cursor-pointer group bg-[#1a0505]/50"
+                    onclick="document.getElementById('ocr-file').click()">
+                    <i data-lucide="camera"
+                        class="w-10 h-10 text-red-400 mx-auto mb-2 group-hover:scale-110 transition-transform"></i>
+                    <p class="text-sm text-gray-300 font-medium">Haz clic para subir foto de la lista</p>
+                    <p class="text-[10px] text-gray-500 mt-1 uppercase tracking-widest">Formatos: JPG, PNG</p>
+                    <input type="file" id="ocr-file" class="hidden" accept="image/*" onchange="simularOCR()">
+                </div>
+
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-red-900/20"></div>
+                    </div>
+                    <div class="relative flex justify-center text-[10px] uppercase font-bold"><span
+                            class="bg-[#2a0a0a] px-2 text-gray-500">O ingresa texto manualmente</span></div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] text-gray-400 uppercase font-bold mb-1">Nombres de Alumnos (uno por
+                        línea o por coma)</label>
+                    <textarea id="ocr-text"
+                        class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 text-xs outline-none focus:border-red-500 h-24 placeholder:text-gray-600"
+                        placeholder="Ej: Juan Pérez, María García..."></textarea>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="closeModal('modal-ocr')"
+                    class="px-4 py-2 text-gray-400 hover:text-white text-sm font-medium">Cancelar</button>
+                <button onclick="procesarOCR()"
+                    class="px-6 py-2 bg-red-700 hover:bg-red-600 text-white rounded-lg text-sm font-bold shadow-lg shadow-red-900/30 transition-all flex items-center gap-2">
+                    <i data-lucide="zap" class="w-4 h-4"></i> Procesar Carga
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Base de datos local inicial (semilla de respaldo)
+        const defaultSeed = {
+            cursos: [
+                { id: '1', name: '4° B - Mañana', año: '4', division: 'B', turno: 'Mañana' },
+                { id: '2', name: '3° A - Tarde', año: '3', division: 'A', turno: 'Tarde' },
+                { id: '3', name: '2° A - Mañana', año: '2', division: 'A', turno: 'Mañana' }
+            ],
+            alumnos: [
+                { id: '1', name: 'Agustín Morales', username: 'amorales', password: '123456', cursoId: '1' },
+                { id: '2', name: 'Camila Fernández', username: 'cfernandez', password: '123456', cursoId: '1' },
+                { id: '3', name: 'Diego Reyes', username: 'dreyes', password: '123456', cursoId: '1' },
+                { id: '4', name: 'Ignacia Silva', username: 'isilva', password: '123456', cursoId: '1' },
+                { id: '5', name: 'Matías Castillo', username: 'mcastillo', password: '123456', cursoId: '1' },
+                { id: '6', name: 'Lucas Fernández', username: 'lucas_fernandez', password: '123456', cursoId: '1' }
+            ],
+            profesores: [
+                { id: '1', name: 'Carlos Gómez', username: 'profesor', password: '123456' },
+                { id: '2', name: 'Juan Pérez', username: 'profesor1', password: '123456' },
+                { id: '3', name: 'Laura Rossi', username: 'lrossi', password: '123456' }
+            ],
+            asignaciones: [
+                { id: '1', cursoId: '1', materia: 'Matemáticas', profeId: '2' },
+                { id: '2', cursoId: '1', materia: 'Historia', profeId: '2' },
+                { id: '3', cursoId: '1', materia: 'Base de datos', profeId: '2' }
+            ]
+        };
+
+        let db = JSON.parse(localStorage.getItem('adminDB'));
+        if (!db || !db.cursos || db.cursos.length === 0) {
+            db = defaultSeed;
+            localStorage.setItem('adminDB', JSON.stringify(db));
+        } else {
+            // Asegurar que las contraseñas no queden guardadas como '••••••'
+            if (Array.isArray(db.alumnos)) {
+                db.alumnos.forEach(a => {
+                    if (!a.password || a.password === '••••••') a.password = '123456';
+                });
+            }
+            if (Array.isArray(db.profesores)) {
+                db.profesores.forEach(p => {
+                    if (!p.password || p.password === '••••••') p.password = '123456';
+                });
+            }
+            localStorage.setItem('adminDB', JSON.stringify(db));
+        }
+
+        function saveDB() {
+            localStorage.setItem('adminDB', JSON.stringify(db));
+            updateDashboard();
+        }
+
+        function cerrarSesionAdmin() {
+            if (typeof window.cerrarSesionSegura === 'function') {
+                window.cerrarSesionSegura('admin-login.html');
+            } else {
+                localStorage.removeItem('eductrack_admin_session');
+                window.location.replace('admin-login.html');
+            }
+        }
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        }
+
+        function showSection(id) {
+            if (window.innerWidth < 768) toggleMobileMenu();
+            document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+            const sec = document.getElementById('sec-' + id);
+            if (sec) sec.classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const navBtn = document.querySelector(`.nav-item[data-section="${id}"]`);
+            if (navBtn) navBtn.classList.add('active');
+
+            if (id === 'cursos') {
+                cerrarDetalleCurso();
+                renderCursosGrid();
+            }
+            if (id === 'profesores') renderProfesores();
+            if (id === 'alumnos') renderAlumnos();
+            if (id === 'dashboard') updateDashboard();
+        }
+
+        function generateId() { return Math.random().toString(36).substr(2, 9); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+
+        function updateDashboard() {
+            document.getElementById('stat-cursos').textContent = db.cursos ? db.cursos.length : 0;
+            document.getElementById('stat-alumnos').textContent = db.alumnos ? db.alumnos.length : 0;
+            document.getElementById('stat-profes').textContent = db.profesores ? db.profesores.length : 0;
+        }
+
+        /* CURSOS GRID */
+        function renderCursosGrid() {
+            const grid = document.getElementById('cursos-grid');
+            if (!grid) return;
+            if (!db.cursos || db.cursos.length === 0) {
+                grid.innerHTML = `<div class="col-span-full p-8 text-center text-gray-500 italic border border-dashed border-red-900/30 rounded-xl">No hay cursos creados. Comienza creando uno.</div>`;
+                return;
+            }
+            grid.innerHTML = db.cursos.map(c => {
+                const numAlumnos = (db.alumnos || []).filter(a => a.cursoId === c.id).length;
+                const numMaterias = (db.asignaciones || []).filter(a => a.cursoId === c.id).length;
+                return `
+                <div class="bg-[#2a0a0a] border border-red-900/20 rounded-xl p-5 hover:border-red-500/60 hover:-translate-y-1 transition-all cursor-pointer group shadow-lg" onclick="abrirDetalleCurso('${c.id}')">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-3 bg-red-900/30 rounded-lg group-hover:bg-red-700 transition"><i data-lucide="presentation" class="w-6 h-6 text-red-300 group-hover:text-white"></i></div>
+                        <button onclick="event.stopPropagation(); eliminarCurso('${c.id}')" class="text-red-400/50 hover:text-red-400 p-1" title="Eliminar Curso"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">${c.name}</h3>
+                    <div class="flex gap-4 text-xs font-medium text-gray-400">
+                        <span class="flex items-center gap-1"><i data-lucide="users" class="w-3 h-3 text-emerald-400"></i> ${numAlumnos} Alumnos</span>
+                        <span class="flex items-center gap-1"><i data-lucide="book" class="w-3 h-3 text-red-300"></i> ${numMaterias} Materias</span>
+                    </div>
+                </div>
+            `}).join('');
+            lucide.createIcons();
+        }
+
+        function openModalCurso() {
+            document.getElementById('curso-anio').value = '';
+            document.getElementById('curso-division').value = '';
+            document.getElementById('curso-turno').value = '';
+            openModal('modal-curso');
+        }
+
+        async function guardarCurso() {
+            const anio = document.getElementById('curso-anio').value.trim();
+            const division = document.getElementById('curso-division').value.trim();
+            const turno = document.getElementById('curso-turno').value.trim();
+
+            if (!anio || !division || !turno) {
+                alert("Por favor completa todos los campos");
+                return;
+            }
+
+            const btn = document.querySelector("#modal-curso button[onclick='guardarCurso()']");
+            const originalText = btn.textContent;
+            btn.textContent = "Guardando...";
+            btn.disabled = true;
+
+            try {
+                let nextId = Date.now().toString();
+                try {
+                    const getResponse = await fetch("https://api.sheetbest.com/sheets/b9647b39-eefd-4f1a-a379-50203e464f35");
+                    if (getResponse.ok) {
+                        const currentData = await getResponse.json();
+                        if (currentData && currentData.length > 0) {
+                            const ids = currentData.map(r => parseInt(r.Id_curso)).filter(id => !isNaN(id));
+                            if (ids.length > 0) nextId = (Math.max(...ids) + 1).toString();
+                        }
+                    }
+                } catch(e) {}
+
+                const cursoData = {
+                    Id_curso: nextId,
+                    Año: anio,
+                    Division: division,
+                    Turno: turno
+                };
+
+                // Guardado remoto en SheetBest
+                try {
+                    await fetch("https://api.sheetbest.com/sheets/b9647b39-eefd-4f1a-a379-50203e464f35", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(cursoData)
+                    });
+                } catch(e) {
+                    console.warn("SheetBest no accesible, guardando en respaldo local:", e);
+                }
+
+                db.cursos.push({ id: nextId.toString(), name: `${anio} ${division} - ${turno}`, año: anio, division, turno });
+                saveDB();
+                renderCursosGrid();
+                closeModal('modal-curso');
+            } catch (error) {
+                console.error(error);
+                alert("Error al procesar el curso");
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function eliminarCurso(id) {
+            if (confirm('¿Eliminar curso? Se perderán las asignaciones y alumnos vinculados.')) {
+                try {
+                    fetch(`https://api.sheetbest.com/sheets/b9647b39-eefd-4f1a-a379-50203e464f35/Id_curso/${id}`, {
+                        method: "DELETE"
+                    }).catch(err => console.warn(err));
+
+                    db.cursos = db.cursos.filter(c => c.id !== id);
+                    db.alumnos = db.alumnos.filter(a => a.cursoId !== id);
+                    db.asignaciones = db.asignaciones.filter(a => a.cursoId !== id);
+                    saveDB();
+                    renderCursosGrid();
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+        }
+
+        /* DETALLE DE CURSO */
+        let selectedCurso = null;
+
+        function abrirDetalleCurso(id) {
+            selectedCurso = db.cursos.find(c => c.id === id);
+            if (!selectedCurso) return;
+            document.getElementById('lista-cursos-view').classList.add('hidden');
+            document.getElementById('detalle-curso-view').classList.remove('hidden');
+            document.getElementById('detalle-curso-nombre').textContent = selectedCurso.name;
+            renderAlumnosCurso();
+            renderMateriasCurso();
+        }
+
+        function cerrarDetalleCurso() {
+            selectedCurso = null;
+            document.getElementById('detalle-curso-view').classList.add('hidden');
+            document.getElementById('lista-cursos-view').classList.remove('hidden');
+            renderCursosGrid();
+        }
+
+        /* ALUMNOS DENTRO DEL CURSO */
+        function renderAlumnosCurso() {
+            const tbody = document.getElementById('alumnos-curso-tbody');
+            if (!tbody || !selectedCurso) return;
+            const alumnos = (db.alumnos || []).filter(a => a.cursoId === selectedCurso.id);
+            if (alumnos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500 italic border-b border-red-900/10">No hay alumnos cargados en este curso.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = alumnos.map(a => `
+                <tr class="hover:bg-red-900/10">
+                    <td class="p-3 font-bold text-white">${a.name}</td>
+                    <td class="p-3">
+                        <span class="text-red-300 block font-mono text-xs">${a.username}</span>
+                        <span class="text-gray-400 text-[10px] flex items-center gap-1 font-mono">Pass: <span data-password="${a.password || '123456'}">••••••</span> <button onclick="toggleVisibility(this)" class="text-gray-400 hover:text-white transition-colors" title="Mostrar contraseña"><i data-lucide="eye" class="w-3 h-3"></i></button></span>
+                    </td>
+                    <td class="p-3 text-right flex gap-2 justify-end">
+                        <button onclick="verPerfilAlumno('${a.id}')" class="text-red-300 hover:text-white p-1" title="Ver Perfil"><i data-lucide="external-link" class="w-4 h-4"></i></button>
+                        <button onclick="eliminarAlumno('${a.id}')" class="text-red-400 hover:text-red-300 p-1" title="Eliminar"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function abrirModalAlumno() {
+            document.getElementById('alumno-name').value = '';
+            document.getElementById('alumno-surname').value = '';
+            const select = document.getElementById('alumno-curso');
+            if (select) {
+                select.innerHTML = (db.cursos || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                if (selectedCurso && selectedCurso.id) {
+                    select.value = selectedCurso.id;
+                }
+            }
+            openModal('modal-alumno');
+        }
+
+        async function guardarAlumno() {
+            let nombre = document.getElementById('alumno-name').value.trim();
+            let apellido = document.getElementById('alumno-surname').value.trim();
+            let cursoIdSeleccionado = document.getElementById('alumno-curso') ? document.getElementById('alumno-curso').value : null;
+            if (!nombre || !apellido || !cursoIdSeleccionado) return;
+
+            const btn = document.querySelector("#modal-alumno button[onclick='guardarAlumno()']");
+            const originalText = btn.textContent;
+            btn.textContent = "Añadiendo...";
+            btn.disabled = true;
+
+            try {
+                let nextId = Date.now().toString();
+                try {
+                    const getResponse = await fetch("https://api.sheetbest.com/sheets/6464d1a7-1907-42c5-b871-4ae6f1ba8e85");
+                    if (getResponse.ok) {
+                        const currentData = await getResponse.json();
+                        const dataArray = Array.isArray(currentData) ? currentData : (currentData ? [currentData] : []);
+                        if (dataArray.length > 0) {
+                            const ids = dataArray.map(r => r && r.Id_alumno ? parseInt(r.Id_alumno) : 0).filter(id => !isNaN(id));
+                            if (ids.length > 0) nextId = (Math.max(...ids) + 1).toString();
+                        }
+                    }
+                } catch(e) {}
+
+                const capitalize = (str) => str.split(' ').map(w => w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : '').join(' ');
+                nombre = capitalize(nombre);
+                apellido = capitalize(apellido);
+
+                const name = `${nombre} ${apellido}`;
+                const username = `${nombre.toLowerCase()}.${apellido.toLowerCase()}`;
+                const password = Math.random().toString(36).slice(-6);
+
+                const idCurso = parseInt(cursoIdSeleccionado) || 1;
+                const nuevoAlumnoLocal = { id: nextId.toString(), name, username, password, cursoId: idCurso.toString() };
+
+                const payloadSheet = {
+                    Id_alumno: nextId,
+                    Nombre: nombre,
+                    Apellido: apellido,
+                    Usuario: username,
+                    Contraseña: password,
+                    Id_curso: idCurso
+                };
+
+                try {
+                    await fetch("https://api.sheetbest.com/sheets/6464d1a7-1907-42c5-b871-4ae6f1ba8e85", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payloadSheet)
+                    });
+                } catch(e) {
+                    console.warn("SheetBest error, guardado local:", e);
+                }
+
+                db.alumnos.push(nuevoAlumnoLocal);
+                saveDB();
+                if (selectedCurso) renderAlumnosCurso();
+                renderAlumnos();
+                closeModal('modal-alumno');
+            } catch (error) {
+                console.error(error);
+                alert("Error de conexión al procesar el alumno");
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function eliminarAlumno(id) {
+            if (confirm('¿Eliminar alumno?')) {
+                db.alumnos = (db.alumnos || []).filter(a => a.id !== id);
+                saveDB();
+                if (selectedCurso) renderAlumnosCurso();
+                renderAlumnos();
+            }
+        }
+
+        function verPerfilAlumno(id) {
+            const alumno = (db.alumnos || []).find(a => a.id === id);
+            if (alumno) {
+                localStorage.setItem('usuario', JSON.stringify({
+                    id: alumno.id,
+                    id_alumno: alumno.id,
+                    nombre: alumno.name.split(' ')[0] || alumno.name,
+                    apellido: alumno.name.split(' ').slice(1).join(' ') || '',
+                    nombreCompleto: alumno.name,
+                    usuario: alumno.username,
+                    rol: 'alumno'
+                }));
+                localStorage.setItem('isGuest', 'false');
+                window.location.href = 'alumno.html';
+            }
+        }
+
+        /* MATERIAS DENTRO DEL CURSO */
+        function renderMateriasCurso() {
+            const tbody = document.getElementById('materias-curso-tbody');
+            if (!tbody || !selectedCurso) return;
+            const asigs = (db.asignaciones || []).filter(a => a.cursoId === selectedCurso.id);
+            if (asigs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500 italic border-b border-red-900/10">No hay materias asignadas en este curso.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = asigs.map(a => {
+                const profeOptions = (db.profesores || []).map(pr => `<option value="${pr.id}" ${pr.id === a.profeId ? 'selected' : ''}>${pr.name}</option>`).join('');
+                return `
+                <tr class="hover:bg-red-900/10">
+                    <td class="p-3 font-bold text-white">${a.materia}</td>
+                    <td class="p-3">
+                        <select onchange="cambiarProfeMateria('${a.id}', this.value)" class="bg-[#1a0505] border border-red-900/40 text-gray-300 text-xs rounded p-1.5 outline-none focus:border-red-500 w-full cursor-pointer">
+                            <option value="">-- Asignar Profesor --</option>
+                            ${profeOptions}
+                        </select>
+                    </td>
+                    <td class="p-3 text-right">
+                        <button onclick="eliminarAsignacion('${a.id}')" class="text-red-400 hover:text-red-300 p-1" title="Eliminar Asignación"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `}).join('');
+            lucide.createIcons();
+        }
+
+        async function abrirModalNuevaMateria() {
+            const materia = prompt('Nombre de la Materia (Ej: Base de datos, Matemática):');
+            if (!materia) return;
+
+            try {
+                let nextId = Date.now().toString();
+                try {
+                    const getResponse = await fetch("https://api.sheetbest.com/sheets/171942f5-7c2b-432c-8a2d-d2820c3e94db");
+                    if (getResponse.ok) {
+                        const currentData = await getResponse.json();
+                        const dataArray = Array.isArray(currentData) ? currentData : (currentData ? [currentData] : []);
+                        if (dataArray.length > 0) {
+                            const ids = dataArray.map(r => r && r.Id_materia ? parseInt(r.Id_materia) : 0).filter(id => !isNaN(id) && id > 0);
+                            if (ids.length > 0) nextId = (Math.max(...ids) + 1).toString();
+                        }
+                    }
+                } catch(e) {}
+
+                const idCurso = parseInt(selectedCurso.id) || 1;
+                const nuevaAsigLocal = { id: nextId.toString(), cursoId: idCurso.toString(), materia, profeId: '' };
+
+                try {
+                    await fetch("https://api.sheetbest.com/sheets/171942f5-7c2b-432c-8a2d-d2820c3e94db", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            Id_materia: nextId,
+                            Materia: materia,
+                            Id_curso: idCurso
+                        })
+                    });
+                } catch(e) {
+                    console.warn("SheetBest error:", e);
+                }
+
+                db.asignaciones.push(nuevaAsigLocal);
+                saveDB();
+                renderMateriasCurso();
+            } catch (error) {
+                console.error(error);
+                alert("Error al procesar la materia");
+            }
+        }
+
+        async function cambiarProfeMateria(asigId, newProfeId) {
+            const asig = (db.asignaciones || []).find(a => a.id === asigId);
+            if (asig) {
+                try {
+                    fetch(`https://api.sheetbest.com/sheets/171942f5-7c2b-432c-8a2d-d2820c3e94db/Id_materia/${asigId}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ Id_Profesor: newProfeId ? parseInt(newProfeId) : "" })
+                    }).catch(e => console.warn(e));
+
+                    if (newProfeId) {
+                        try {
+                            const relUrl = "https://api.sheetbest.com/sheets/0b08e439-4756-44c5-95ca-6ef58643e708";
+                            const targetMateriaId = asigId.toString();
+
+                            fetch(`${relUrl}/Id_materia/${targetMateriaId}`, {
+                                method: "PATCH",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    Id_Profesor: parseInt(newProfeId),
+                                    Id_curso: parseInt(selectedCurso.id),
+                                    Id_materia: parseInt(targetMateriaId)
+                                })
+                            }).catch(() => {});
+                        } catch (e) {}
+                    }
+
+                    asig.profeId = newProfeId;
+                    saveDB();
+                } catch (error) {
+                    console.error("Error al asignar profesor:", error);
+                }
+            }
+        }
+
+        function eliminarAsignacion(id) {
+            db.asignaciones = (db.asignaciones || []).filter(a => a.id !== id);
+            saveDB();
+            renderMateriasCurso();
+        }
+
+        /* GESTION DE ALUMNOS (GENERAL) */
+        function renderAlumnos() {
+            const tbody = document.getElementById('alumnos-general-tbody');
+            if (!tbody) return;
+            if (!db.alumnos || db.alumnos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500 italic">No hay alumnos cargados.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = db.alumnos.map(a => {
+                const cursoOptions = (db.cursos || []).map(c => `<option value="${c.id}" ${c.id === a.cursoId ? 'selected' : ''}>${c.name}</option>`).join('');
+                return `
+                <tr class="hover:bg-red-900/10">
+                    <td class="p-4 font-bold text-white">${a.name}</td>
+                    <td class="p-4 text-red-300 font-mono text-xs">${a.username}</td>
+                    <td class="p-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-400 font-mono tracking-widest text-xs" data-password="${a.password || '123456'}">••••••</span>
+                            <button onclick="toggleVisibility(this)" class="text-gray-400 hover:text-white transition-colors" title="Mostrar contraseña">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <select onchange="cambiarCursoAlumno('${a.id}', this.value)" class="bg-[#1a0505] border border-red-900/40 text-gray-300 text-xs rounded-lg px-2 py-1 outline-none focus:border-red-500 cursor-pointer">
+                            <option value="">Sin asignar</option>
+                            ${cursoOptions}
+                        </select>
+                    </td>
+                    <td class="p-4 text-right">
+                        <button onclick="eliminarAlumnoGeneral('${a.id}')" class="text-red-400 hover:bg-red-900/30 p-2 rounded transition" title="Eliminar Alumno"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function cambiarCursoAlumno(alumnoId, nuevoCursoId) {
+            const alumno = (db.alumnos || []).find(a => a.id === alumnoId);
+            if (alumno) {
+                alumno.cursoId = nuevoCursoId;
+                saveDB();
+                if (document.getElementById('sec-cursos') && !document.getElementById('sec-cursos').classList.contains('hidden') && typeof renderAlumnosCurso === 'function') {
+                    renderAlumnosCurso();
+                }
+            }
+        }
+
+        function eliminarAlumnoGeneral(id) {
+            if (confirm('¿Seguro que deseas eliminar a este alumno?')) {
+                db.alumnos = (db.alumnos || []).filter(a => a.id !== id);
+                saveDB();
+                renderAlumnos();
+                if (document.getElementById('sec-cursos') && !document.getElementById('sec-cursos').classList.contains('hidden') && typeof renderAlumnosCurso === 'function') {
+                    renderAlumnosCurso();
+                }
+            }
+        }
+
+        /* GESTION DE PROFESORES */
+        function renderProfesores() {
+            const tbody = document.getElementById('profes-tbody');
+            if (!tbody) return;
+            if (!db.profesores || db.profesores.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500 italic">No hay profesores cargados.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = db.profesores.map(p => `
+                <tr class="hover:bg-red-900/10">
+                    <td class="p-4 font-bold text-white">${p.name}</td>
+                    <td class="p-4 text-red-300 font-mono text-xs">${p.username}</td>
+                    <td class="p-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-400 font-mono tracking-widest text-xs" data-password="${p.password || '123456'}">••••••</span>
+                            <button onclick="toggleVisibility(this)" class="text-gray-400 hover:text-white transition-colors" title="Mostrar contraseña">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td class="p-4 text-right">
+                        <button onclick="eliminarProfe('${p.id}')" class="text-red-400 hover:bg-red-900/30 p-2 rounded transition" title="Eliminar Profesor"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function openModalProfe() {
+            document.getElementById('profe-nombre').value = '';
+            document.getElementById('profe-apellido').value = '';
+            openModal('modal-profe');
+        }
+
+        async function guardarProfe() {
+            let nombre = document.getElementById('profe-nombre').value.trim();
+            let apellido = document.getElementById('profe-apellido').value.trim();
+            if (!nombre || !apellido) return;
+
+            const btn = document.querySelector("#modal-profe button[onclick='guardarProfe()']");
+            const originalText = btn.textContent;
+            btn.textContent = "Guardando...";
+            btn.disabled = true;
+
+            try {
+                let nextId = Date.now().toString();
+                try {
+                    const getResponse = await fetch("https://api.sheetbest.com/sheets/0c643ea8-01eb-4d4c-8959-9f72cec0a99a");
+                    if (getResponse.ok) {
+                        const currentData = await getResponse.json();
+                        const dataArray = Array.isArray(currentData) ? currentData : (currentData ? [currentData] : []);
+                        if (dataArray.length > 0) {
+                            const ids = dataArray.map(r => {
+                                const idVal = r ? (r.Id_Profesor || r.Id_profesor) : null;
+                                return idVal ? parseInt(idVal) : 0;
+                            }).filter(id => !isNaN(id) && id > 0);
+                            if (ids.length > 0) nextId = (Math.max(...ids) + 1).toString();
+                        }
+                    }
+                } catch(e) {}
+
+                const capitalize = (str) => str.split(' ').map(w => w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : '').join(' ');
+                nombre = capitalize(nombre);
+                apellido = capitalize(apellido);
+
+                const name = `${nombre} ${apellido}`;
+                const username = `${nombre.toLowerCase()}.${apellido.toLowerCase()}`;
+                const password = Math.random().toString(36).slice(-6);
+
+                const nuevoProfeLocal = { id: nextId.toString(), name, username, password };
+
+                try {
+                    await fetch("https://api.sheetbest.com/sheets/0c643ea8-01eb-4d4c-8959-9f72cec0a99a", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            Id_Profesor: nextId,
+                            Nombre: nombre,
+                            Apellido: apellido,
+                            Usuario: username,
+                            Contraseña: password
+                        })
+                    });
+                } catch(e) {
+                    console.warn("SheetBest error:", e);
+                }
+
+                db.profesores.push(nuevoProfeLocal);
+                saveDB();
+                renderProfesores();
+                closeModal('modal-profe');
+            } catch (error) {
+                console.error(error);
+                alert("Error al procesar el docente");
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function eliminarProfe(id) {
+            if (confirm('¿Eliminar profesor? Perderá todas sus asignaciones.')) {
+                db.profesores = (db.profesores || []).filter(p => p.id !== id);
+                (db.asignaciones || []).forEach(a => { if (a.profeId === id) a.profeId = ''; });
+                saveDB();
+                renderProfesores();
+            }
+        }
+
+        /* OCR SIMULADO */
+        function openModalOCR() {
+            document.getElementById('ocr-text').value = '';
+            document.getElementById('ocr-file').value = '';
+            openModal('modal-ocr');
+        }
+
+        function simularOCR() {
+            const names = ["Ana Martínez", "Bautista Rojas", "Clara Benítez", "Daniel Costa", "Elena Paz"];
+            document.getElementById('ocr-text').value = names.join(", ");
+        }
+
+        function procesarOCR() {
+            const text = document.getElementById('ocr-text').value.trim();
+            if (!text) { alert('Por favor ingresa nombres o sube una imagen.'); return; }
+            const names = text.split(/,|\n/).map(n => n.trim()).filter(n => n.length > 2);
+
+            const targetCursoId = selectedCurso ? selectedCurso.id : (db.cursos[0]?.id || '1');
+
+            names.forEach(name => {
+                const username = name.toLowerCase().replace(/\s+/g, '.') + Math.floor(Math.random() * 100);
+                const password = Math.random().toString(36).slice(-6);
+                db.alumnos.push({ id: generateId(), name, username, password, cursoId: targetCursoId });
+            });
+
+            saveDB();
+            if (selectedCurso) renderAlumnosCurso();
+            renderAlumnos();
+            closeModal('modal-ocr');
+            alert(`¡Éxito! Se cargaron ${names.length} alumnos.`);
+        }
+
+        async function loadDBFromSheets() {
+            try {
+                // Cargar Cursos
+                const cursosResponse = await fetch("https://api.sheetbest.com/sheets/b9647b39-eefd-4f1a-a379-50203e464f35");
+                if (cursosResponse.ok) {
+                    const data = await cursosResponse.json();
+                    if (data && Array.isArray(data) && data.length > 0) {
+                        const cursosNuevos = data.map(row => ({
+                            id: row.Id_curso ? row.Id_curso.toString() : generateId(),
+                            name: `${row.Año || ''} ${row.Division || ''} - ${row.Turno || ''}`.trim(),
+                            año: row.Año || '',
+                            division: row.Division || '',
+                            turno: row.Turno || ''
+                        })).filter(c => c.name !== '-' && c.name !== '');
+                        if (cursosNuevos.length > 0) db.cursos = cursosNuevos;
+                    }
+                }
+
+                // Cargar Alumnos
+                const alumnosResponse = await fetch("https://api.sheetbest.com/sheets/6464d1a7-1907-42c5-b871-4ae6f1ba8e85");
+                if (alumnosResponse.ok) {
+                    const alumnosData = await alumnosResponse.json();
+                    const alumnosArray = Array.isArray(alumnosData) ? alumnosData : (alumnosData ? [alumnosData] : []);
+                    if (alumnosArray.length > 0) {
+                        const alumnosNuevos = alumnosArray.map(row => ({
+                            id: row.Id_alumno ? row.Id_alumno.toString() : generateId(),
+                            name: `${row.Nombre || ''} ${row.Apellido || ''}`.trim(),
+                            username: row.Usuario || '',
+                            password: (row.Contraseña && row.Contraseña !== '••••••') ? row.Contraseña : '123456',
+                            cursoId: row.Id_curso ? row.Id_curso.toString() : ''
+                        })).filter(a => a.name !== '');
+                        if (alumnosNuevos.length > 0) db.alumnos = alumnosNuevos;
+                    }
+                }
+
+                // Cargar Profesores
+                const profesResponse = await fetch("https://api.sheetbest.com/sheets/0c643ea8-01eb-4d4c-8959-9f72cec0a99a");
+                if (profesResponse.ok) {
+                    const profesData = await profesResponse.json();
+                    const profesArray = Array.isArray(profesData) ? profesData : (profesData ? [profesData] : []);
+                    if (profesArray.length > 0) {
+                        const profesNuevos = profesArray.map(row => ({
+                            id: (row.Id_Profesor || row.Id_profesor) ? (row.Id_Profesor || row.Id_profesor).toString() : generateId(),
+                            name: `${row.Nombre || ''} ${row.Apellido || ''}`.trim(),
+                            username: row.Usuario || '',
+                            password: (row.Contraseña && row.Contraseña !== '••••••') ? row.Contraseña : '123456'
+                        })).filter(p => p.name !== '');
+                        if (profesNuevos.length > 0) db.profesores = profesNuevos;
+                    }
+                }
+
+                // Cargar Materias (Asignaciones)
+                const materiasResponse = await fetch("https://api.sheetbest.com/sheets/171942f5-7c2b-432c-8a2d-d2820c3e94db");
+                if (materiasResponse.ok) {
+                    const materiasData = await materiasResponse.json();
+                    const materiasArray = Array.isArray(materiasData) ? materiasData : (materiasData ? [materiasData] : []);
+                    if (materiasArray.length > 0) {
+                        const asigsNuevas = materiasArray.map(row => ({
+                            id: row.Id_materia ? row.Id_materia.toString() : generateId(),
+                            cursoId: row.Id_curso ? row.Id_curso.toString() : '',
+                            materia: row.Materia || '',
+                            profeId: row.Id_Profesor ? row.Id_Profesor.toString() : ''
+                        })).filter(m => m.materia !== '');
+                        if (asigsNuevas.length > 0) db.asignaciones = asigsNuevas;
+                    }
+                }
+
+                saveDB();
+            } catch (error) {
+                console.warn("Carga desde SheetBest completada o usando respaldo local:", error);
+            }
+        }
+
+        // Toggle Password Visibility
+        function toggleVisibility(btn) {
+            const span = btn.previousElementSibling;
+            if (!span) return;
+            const pwd = (span.dataset.password && span.dataset.password !== '••••••') ? span.dataset.password : '123456';
+            const isHidden = span.textContent === '••••••';
+            span.textContent = isHidden ? pwd : '••••••';
+            span.style.letterSpacing = isHidden ? 'normal' : '0.2em';
+            span.classList.toggle('text-white', isHidden);
+            span.classList.toggle('text-gray-400', !isHidden);
+            const iconSize = btn.closest('td')?.classList.contains('p-3') ? 'w-3 h-3' : 'w-4 h-4';
+            btn.innerHTML = `<i data-lucide="${isHidden ? 'eye-off' : 'eye'}" class="${iconSize}"></i>`;
+            lucide.createIcons();
+        }
+
+        // Inicialización
+        lucide.createIcons();
+        showSection('dashboard');
+
+        // Cargar datos al inicio
+        loadDBFromSheets().then(() => {
+            if (!document.getElementById('sec-cursos').classList.contains('hidden')) {
+                renderCursosGrid();
+            }
+            if (!document.getElementById('sec-profesores').classList.contains('hidden')) {
+                renderProfesores();
+            }
+            if (!document.getElementById('sec-alumnos').classList.contains('hidden')) {
+                renderAlumnos();
+            }
+            if (!document.getElementById('sec-dashboard').classList.contains('hidden')) {
+                updateDashboard();
+            }
+        });
+    </script>
+</body>
+
+</html>

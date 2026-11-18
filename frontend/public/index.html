@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-stone-950 text-stone-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduTrack — Portal Académico y Asignaciones</title>
+
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#fff1f2',
+              100: '#ffe4e6',
+              500: '#f43f5e',
+              600: '#e11d48',
+              700: '#be123c',
+              800: '#8a1014',
+              900: '#54080a',
+              950: '#2a0507',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(225, 29, 72, 0.3);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col bg-gradient-to-b from-stone-950 via-stone-900 to-black text-stone-100 antialiased selection:bg-brand-600 selection:text-white">
+
+  <!-- Top Announcement Bar -->
+  <aside class="bg-gradient-to-r from-brand-950 via-brand-900 to-brand-950 border-b border-brand-800/40 py-1.5 px-4 text-xs font-medium text-center text-rose-200/90 flex items-center justify-center gap-2">
+    <span class="inline-flex items-center justify-center w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+    <span>Ciclo Lectivo 2026 — Sincronización en la nube activa</span>
+    <span class="hidden sm:inline text-rose-400/50">•</span>
+    <span class="hidden sm:inline text-rose-300">Base de datos de asignaciones conectada mediante SheetBest</span>
+  </aside>
+
+  <!-- Navbar -->
+  <header class="sticky top-0 z-40 backdrop-blur-md bg-stone-950/80 border-b border-stone-800/80 transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        
+        <!-- Logo -->
+        <a href="index.html" class="flex items-center gap-3 group">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 p-0.5 shadow-lg shadow-brand-700/25 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <div class="w-full h-full bg-stone-950 rounded-[14px] flex items-center justify-center">
+              <i data-lucide="graduation-cap" class="w-6 h-6 text-brand-500"></i>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-2xl font-black tracking-tight text-white group-hover:text-rose-100 transition-colors">EDUCTRACK</span>
+              <span class="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-brand-950 border border-brand-700/50 text-brand-400">Portal</span>
+            </div>
+            <p class="text-xs text-stone-400 font-medium">Gestión de Asignaciones y Vida Escolar</p>
+          </div>
+        </a>
+
+        <!-- Navigation Buttons -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          <a href="login/estudiantes.html" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-stone-300 hover:text-white bg-stone-900/80 hover:bg-stone-800 border border-stone-700/60 hover:border-brand-600/50 transition-all shadow-sm">
+            <i data-lucide="user" class="w-4 h-4 text-emerald-400"></i>
+            <span class="hidden xs:inline">Portal</span> Estudiantes
+          </a>
+
+          <a href="login/docente.html" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-stone-300 hover:text-white bg-stone-900/80 hover:bg-stone-800 border border-stone-700/60 hover:border-brand-600/50 transition-all shadow-sm">
+            <i data-lucide="briefcase" class="w-4 h-4 text-rose-400"></i>
+            <span class="hidden xs:inline">Portal</span> Docentes
+          </a>
+
+          <button id="btnManualRefresh" class="inline-flex items-center justify-center w-10 h-10 rounded-xl text-stone-400 hover:text-white bg-stone-900 hover:bg-stone-800 border border-stone-800 hover:border-brand-700/60 transition-all" title="Recargar asignaciones de la nube">
+            <i data-lucide="refresh-cw" id="refreshIcon" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero & Title Section -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    
+    <div class="text-center max-w-3xl mx-auto mb-10 sm:mb-12">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-950/80 border border-brand-800/60 text-xs font-semibold text-brand-300 mb-4 shadow-sm">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-brand-400"></i>
+        <span>Cartelera Digital Institucional</span>
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+        Asignaciones Escolares <span class="bg-gradient-to-r from-brand-500 via-rose-400 to-amber-300 bg-clip-text text-transparent">& Tareas</span>
+      </h1>
+      <p class="mt-3.5 text-base sm:text-lg text-stone-400 leading-relaxed font-normal">
+        Consulta el temario de cada materia, las fechas de entrega y el detalle explícito de 
+        <strong class="text-rose-200 font-semibold">de qué se trata cada tarea</strong> para organizar tus estudios.
+      </p>
+    </div>
+
+    <!-- Search & Filter Controls -->
+    <section class="bg-stone-900/60 backdrop-blur-md border border-stone-800/80 rounded-2xl p-4 sm:p-6 mb-8 shadow-xl shadow-black/40">
+      
+      <div class="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+        
+        <!-- Live Real-time Search Input -->
+        <div class="relative flex-1">
+          <i data-lucide="search" class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none"></i>
+          <input 
+            type="search" 
+            id="searchInput" 
+            placeholder="Buscar por materia, título o de qué se trata la tarea..." 
+            class="w-full pl-12 pr-10 py-3.5 bg-stone-950/80 border border-stone-700/70 rounded-xl text-stone-100 placeholder-stone-500 text-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all shadow-inner"
+          >
+          <button id="btnClearSearch" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-300 p-1" title="Limpiar búsqueda">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Filter Dropdown (Cursos) -->
+        <div class="flex items-center gap-3">
+          <div class="relative flex-1 sm:flex-none sm:w-44">
+            <select id="courseSelect" class="w-full appearance-none bg-stone-950/80 border border-stone-700/70 rounded-xl px-4 py-3.5 text-sm text-stone-200 font-medium focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 cursor-pointer">
+              <option value="">Todos los cursos</option>
+              <option value="1A">1° Año "A"</option>
+              <option value="2A">2° Año "A"</option>
+              <option value="3A">3° Año "A"</option>
+              <option value="4A">4° Año "A"</option>
+              <option value="4B">4° Año "B"</option>
+            </select>
+            <i data-lucide="chevron-down" class="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none"></i>
+          </div>
+
+          <!-- Active Counter -->
+          <div class="hidden lg:flex items-center gap-2 px-3.5 py-3.5 rounded-xl bg-stone-950 border border-stone-800 text-xs font-medium text-stone-400">
+            <span id="counterBadge" class="font-bold text-white">0</span> asignaciones
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick Subject Filter Badges -->
+      <div class="mt-4 pt-4 border-t border-stone-800/80 flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar text-xs">
+        <span class="text-stone-400 font-semibold mr-1 flex items-center gap-1 shrink-0">
+          <i data-lucide="filter" class="w-3.5 h-3.5"></i> Materias:
+        </span>
+        <div id="subjectPillsContainer" class="flex items-center gap-1.5 shrink-0">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Cloud Status Indicator -->
+    <div id="syncStatusBar" class="mb-6 flex items-center justify-between text-xs px-4 py-2.5 rounded-xl bg-stone-900/50 border border-stone-800/70 text-stone-400">
+      <div class="flex items-center gap-2">
+        <span id="statusIndicatorDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+        <span id="statusIndicatorText">Conectado con base de datos en tiempo real (Google Sheets / SheetBest)</span>
+      </div>
+      <div class="hidden sm:block text-stone-500 font-mono text-[11px]" id="lastSyncLabel">
+        Cargado hace instantes
+      </div>
+    </div>
+
+    <!-- Cards Grid -->
+    <section>
+      <div id="assignmentsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="hidden text-center py-16 px-4 bg-stone-900/30 border border-dashed border-stone-800 rounded-3xl">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-brand-950 border border-brand-800/60 flex items-center justify-center text-brand-400 shadow-lg shadow-brand-950">
+          <i data-lucide="folder-search" class="w-8 h-8"></i>
+        </div>
+        <h3 class="text-lg font-bold text-white">No se encontraron asignaciones</h3>
+        <p class="text-sm text-stone-400 max-w-md mx-auto mt-1">
+          No hay tareas que coincidan con los filtros de búsqueda aplicados. Intenta buscar con otros términos o materias.
+        </p>
+        <button id="btnResetFilters" class="mt-4 px-4 py-2 rounded-xl bg-brand-700 hover:bg-brand-600 text-white text-xs font-bold transition-all shadow-md">
+          Restablecer todos los filtros
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Detailed Modal ("¿De qué se trata la tarea?") -->
+  <div id="detailModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div id="modalBackdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"></div>
+    
+    <div class="relative w-full max-w-2xl bg-gradient-to-b from-stone-900 to-stone-950 border border-brand-800/60 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-brand-950/50 z-10 my-8">
+      
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between gap-4 pb-5 border-b border-stone-800">
+        <div>
+          <span id="modalMateriaBadge" class="inline-block text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-brand-950 text-brand-400 border border-brand-800/60 mb-2">
+            Materia
+          </span>
+          <h2 id="modalTitle" class="text-xl sm:text-2xl font-black text-white leading-snug">
+            Título de la Asignación
+          </h2>
+        </div>
+        <button id="btnCloseModal" class="w-9 h-9 rounded-full bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white flex items-center justify-center transition-colors shrink-0">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="py-6 space-y-6">
+        
+        <!-- Metadata bar -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 bg-stone-950/80 rounded-2xl border border-stone-800/80 text-xs">
+          <div>
+            <span class="text-stone-500 block mb-0.5">Curso / División:</span>
+            <span id="modalCurso" class="font-bold text-white flex items-center gap-1.5">
+              <i data-lucide="users" class="w-3.5 h-3.5 text-brand-400"></i>
+              4B
+            </span>
+          </div>
+          <div>
+            <span class="text-stone-500 block mb-0.5">Fecha de Entrega:</span>
+            <span id="modalFecha" class="font-bold text-rose-300 flex items-center gap-1.5">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 text-rose-400"></i>
+              20 Nov 2026
+            </span>
+          </div>
+          <div class="col-span-2 sm:col-span-1">
+            <span class="text-stone-500 block mb-0.5">Docente a Cargo:</span>
+            <span id="modalProfesor" class="font-bold text-stone-300 flex items-center gap-1.5 truncate">
+              <i data-lucide="user-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+              Prof. Pérez
+            </span>
+          </div>
+        </div>
+
+        <!-- Highlighted section: "De qué se trata" -->
+        <div class="bg-gradient-to-br from-brand-950/50 via-stone-950 to-stone-950 p-5 rounded-2xl border border-brand-800/40">
+          <div class="flex items-center gap-2 mb-3 text-brand-300 font-bold text-sm tracking-wide">
+            <i data-lucide="file-text" class="w-4 h-4 text-brand-400"></i>
+            <span>¿De qué se trata esta tarea? (Instrucciones detalladas)</span>
+          </div>
+          <p id="modalDescripcion" class="text-sm text-stone-300 leading-relaxed font-normal whitespace-pre-line">
+            Explicación detallada...
+          </p>
+        </div>
+
+        <!-- Criteria & Tips Box -->
+        <div class="p-4 bg-stone-900/60 rounded-xl border border-stone-800 text-xs text-stone-400 space-y-2">
+          <div class="font-semibold text-stone-300 flex items-center gap-1.5">
+            <i data-lucide="info" class="w-4 h-4 text-amber-400"></i>
+            <span>Pautas para la entrega</span>
+          </div>
+          <p>
+            Recuerda subir tus avances a tiempo en el portal estudiantil o presentar la guía impresa en el horario correspondiente a la clase.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="pt-4 border-t border-stone-800 flex items-center justify-between">
+        <a href="login/estudiantes.html" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-700 hover:bg-brand-600 text-white font-bold text-xs transition-all shadow-lg shadow-brand-950">
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+          Ingresar para entregar tarea
+        </a>
+        <button id="btnModalCloseSecondary" class="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold transition-colors">
+          Cerrar
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer with Hidden Admin Gate -->
+  <footer class="mt-auto border-t border-stone-900 bg-stone-950/90 py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-stone-500">
+        
+        <!-- School Information -->
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-brand-950 border border-brand-800/50 flex items-center justify-center text-brand-400">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <p class="font-bold text-stone-300">EducTrack — Plataforma Educativa Institucional</p>
+            <p class="text-stone-500">Gestión académica centralizada &bull; Google Sheets API</p>
+          </div>
+        </div>
+
+        <!-- Links & Disclaimer -->
+        <div class="flex flex-wrap items-center justify-center gap-5 text-stone-400">
+          <a href="login/estudiantes.html" class="hover:text-stone-200 transition-colors">Estudiantes</a>
+          <a href="login/docente.html" class="hover:text-stone-200 transition-colors">Docentes</a>
+          <span class="text-stone-700">&bull;</span>
+          <span>© 2026 Todos los derechos reservados</span>
+
+          <!-- ── APARTADO ESCONDIDO (HIDDEN GATE) DE ADMINISTRACIÓN ── -->
+          <!-- Ícono de baja opacidad y discreto ubicado estratégicamente en el pie de página -->
+          <a 
+            href="admin-login.html" 
+            id="hiddenAdminGate" 
+            class="opacity-15 hover:opacity-100 transition-opacity duration-300 text-stone-600 hover:text-brand-400 p-1 rounded hover:bg-stone-900 flex items-center gap-1"
+            title="Gestión y Control Administrativo"
+            aria-label="Acceso Administrativo"
+          >
+            <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+            <span class="text-[10px] uppercase font-mono tracking-widest hidden sm:inline">Admin</span>
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- Script SheetBest & Frontend Logic -->
+  <script src="sheetbest.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      let allAssignments = [];
+      let activeSubjectFilter = 'Todas';
+
+      const searchInput = document.getElementById('searchInput');
+      const btnClearSearch = document.getElementById('btnClearSearch');
+      const courseSelect = document.getElementById('courseSelect');
+      const counterBadge = document.getElementById('counterBadge');
+      const assignmentsGrid = document.getElementById('assignmentsGrid');
+      const emptyState = document.getElementById('emptyState');
+      const subjectPillsContainer = document.getElementById('subjectPillsContainer');
+      const btnManualRefresh = document.getElementById('btnManualRefresh');
+      const refreshIcon = document.getElementById('refreshIcon');
+      const btnResetFilters = document.getElementById('btnResetFilters');
+
+      // Modal elements
+      const detailModal = document.getElementById('detailModal');
+      const modalBackdrop = document.getElementById('modalBackdrop');
+      const btnCloseModal = document.getElementById('btnCloseModal');
+      const btnModalCloseSecondary = document.getElementById('btnModalCloseSecondary');
+      const modalMateriaBadge = document.getElementById('modalMateriaBadge');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalCurso = document.getElementById('modalCurso');
+      const modalFecha = document.getElementById('modalFecha');
+      const modalProfesor = document.getElementById('modalProfesor');
+      const modalDescripcion = document.getElementById('modalDescripcion');
+
+      // Paleta temática según materia
+      const MATERIA_COLORS = {
+        'Matemáticas': { badge: 'bg-blue-950/80 text-blue-300 border-blue-800/60', icon: 'calculator' },
+        'Lengua y Literatura': { badge: 'bg-purple-950/80 text-purple-300 border-purple-800/60', icon: 'book-open' },
+        'Física': { badge: 'bg-amber-950/80 text-amber-300 border-amber-800/60', icon: 'atom' },
+        'Historia': { badge: 'bg-emerald-950/80 text-emerald-300 border-emerald-800/60', icon: 'landmark' },
+        'Química': { badge: 'bg-teal-950/80 text-teal-300 border-teal-800/60', icon: 'flask-conical' },
+        'Biología': { badge: 'bg-green-950/80 text-green-300 border-green-800/60', icon: 'leaf' },
+        'Inglés': { badge: 'bg-sky-950/80 text-sky-300 border-sky-800/60', icon: 'languages' },
+        'General': { badge: 'bg-brand-950/80 text-brand-300 border-brand-800/60', icon: 'file-text' }
+      };
+
+      function getMateriaStyle(materia) {
+        return MATERIA_COLORS[materia] || MATERIA_COLORS['General'];
+      }
+
+      // Cargar Asignaciones desde SheetBest / LocalStorage
+      async function loadAssignments(force = false) {
+        if (refreshIcon) refreshIcon.classList.add('animate-spin');
+        try {
+          const res = await SheetBestService.getAsignaciones(force);
+          allAssignments = res.data || [];
+          renderSubjectPills();
+          applyFilters();
+
+          const dot = document.getElementById('statusIndicatorDot');
+          const txt = document.getElementById('statusIndicatorText');
+          const lbl = document.getElementById('lastSyncLabel');
+          
+          if (res.fromCloud) {
+            dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50';
+            txt.textContent = 'Sincronizado en tiempo real con Google Sheets (SheetBest)';
+          } else {
+            dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
+            txt.textContent = 'Modo local activo (Respaldo en almacenamiento seguro)';
+          }
+          if (lbl) {
+            lbl.textContent = `Actualizado ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+          }
+        } catch (err) {
+          console.error('[Index] Error cargando asignaciones:', err);
+        } finally {
+          if (refreshIcon) {
+            setTimeout(() => refreshIcon.classList.remove('animate-spin'), 600);
+          }
+        }
+      }
+
+      // Renderizar pastillas de filtro de materias
+      function renderSubjectPills() {
+        const materias = ['Todas', ...new Set(allAssignments.map(a => a.materia).filter(Boolean))];
+        subjectPillsContainer.innerHTML = '';
+
+        materias.forEach(mat => {
+          const btn = document.createElement('button');
+          const isActive = mat === activeSubjectFilter;
+          btn.type = 'button';
+          btn.className = `px-3 py-1 rounded-lg font-medium transition-all cursor-pointer ${
+            isActive 
+              ? 'bg-brand-700 text-white font-bold shadow-md shadow-brand-950 border border-brand-600' 
+              : 'bg-stone-950/80 text-stone-400 hover:text-stone-200 hover:bg-stone-900 border border-stone-800'
+          }`;
+          btn.textContent = mat;
+          btn.addEventListener('click', () => {
+            activeSubjectFilter = mat;
+            renderSubjectPills();
+            applyFilters();
+          });
+          subjectPillsContainer.appendChild(btn);
+        });
+      }
+
+      // Filtrado en Tiempo Real (Buscador, Curso, Materia)
+      function applyFilters() {
+        const query = (searchInput.value || '').trim().toLowerCase();
+        const selectedCourse = courseSelect.value;
+
+        btnClearSearch.classList.toggle('hidden', query.length === 0);
+
+        const filtered = allAssignments.filter(item => {
+          // Filtro por materia
+          if (activeSubjectFilter !== 'Todas' && item.materia !== activeSubjectFilter) {
+            return false;
+          }
+          // Filtro por curso
+          if (selectedCourse && item.curso && item.curso !== selectedCourse && item.curso !== 'Todos') {
+            return false;
+          }
+          // Filtro en tiempo real por término (materia, título O descripción explícita)
+          if (query) {
+            const inMateria = (item.materia || '').toLowerCase().includes(query);
+            const inTitulo = (item.titulo || '').toLowerCase().includes(query);
+            const inDescripcion = (item.descripcion || '').toLowerCase().includes(query);
+            const inProfesor = (item.profesor || '').toLowerCase().includes(query);
+            return inMateria || inTitulo || inDescripcion || inProfesor;
+          }
+          return true;
+        });
+
+        counterBadge.textContent = filtered.length;
+        renderCards(filtered);
+      }
+
+      // Renderizar Tarjetas con el apartado "¿De qué se trata?"
+      function renderCards(list) {
+        assignmentsGrid.innerHTML = '';
+
+        if (list.length === 0) {
+          assignmentsGrid.classList.add('hidden');
+          emptyState.classList.remove('hidden');
+          return;
+        }
+
+        assignmentsGrid.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+
+        list.forEach(asig => {
+          const style = getMateriaStyle(asig.materia);
+
+          const card = document.createElement('article');
+          card.className = 'group relative flex flex-col bg-stone-900/60 hover:bg-stone-900 border border-stone-800/90 hover:border-brand-700/60 rounded-3xl p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-950/40';
+
+          card.innerHTML = `
+            <!-- Top Tag & Course -->
+            <div class="flex items-center justify-between gap-2 mb-3.5">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${style.badge}">
+                <i data-lucide="${style.icon}" class="w-3.5 h-3.5"></i>
+                ${escapeHtml(asig.materia)}
+              </span>
+              <span class="px-2.5 py-0.5 rounded-lg bg-stone-950 border border-stone-800 text-[11px] font-bold text-stone-300">
+                Curso ${escapeHtml(asig.curso || 'General')}
+              </span>
+            </div>
+
+            <!-- Título de la Asignación -->
+            <h3 class="text-lg font-bold text-white group-hover:text-rose-100 transition-colors line-clamp-2 leading-snug mb-3">
+              ${escapeHtml(asig.titulo)}
+            </h3>
+
+            <!-- ── APARTADO DETALLADO: ¿DE QUÉ SE TRATA? ── -->
+            <div class="flex-1 bg-stone-950/80 rounded-2xl p-4 border border-stone-800/80 mb-4 group-hover:border-stone-700 transition-colors">
+              <div class="flex items-center gap-1.5 text-brand-400 font-bold text-xs uppercase tracking-wider mb-2">
+                <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
+                <span>¿De qué se trata la tarea?</span>
+              </div>
+              <p class="text-xs sm:text-sm text-stone-300 leading-relaxed line-clamp-3">
+                ${escapeHtml(asig.descripcion || 'Sin descripción detallada disponible.')}
+              </p>
+            </div>
+
+            <!-- Metadata & Due Date Footer -->
+            <div class="pt-3 border-t border-stone-800/80 flex items-center justify-between text-xs text-stone-400">
+              <div class="flex items-center gap-1.5 font-medium text-rose-300/90">
+                <i data-lucide="clock" class="w-3.5 h-3.5 text-rose-400"></i>
+                <span>Entrega: <strong class="text-white">${escapeHtml(asig.fechaEntrega || 'A confirmar')}</strong></span>
+              </div>
+              <button type="button" class="btnOpenDetail inline-flex items-center gap-1 font-bold text-brand-400 hover:text-brand-300 transition-colors group/btn">
+                <span>Ver guía</span>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform"></i>
+              </button>
+            </div>
+          `;
+
+          // Clic para abrir el modal explicativo completo
+          card.querySelector('.btnOpenDetail').addEventListener('click', () => openModal(asig));
+          card.addEventListener('click', (e) => {
+            if (!e.target.closest('button') && !e.target.closest('a')) {
+              openModal(asig);
+            }
+          });
+
+          assignmentsGrid.appendChild(card);
+        });
+
+        // Refrescar íconos de Lucide
+        if (window.lucide) {
+          window.lucide.createIcons();
+        }
+      }
+
+      // Modal Detalle
+      function openModal(asig) {
+        modalMateriaBadge.textContent = asig.materia || 'General';
+        modalTitle.textContent = asig.titulo;
+        modalCurso.innerHTML = `<i data-lucide="users" class="w-3.5 h-3.5 text-brand-400"></i> Curso ${escapeHtml(asig.curso || 'Todos')}`;
+        modalFecha.innerHTML = `<i data-lucide="calendar" class="w-3.5 h-3.5 text-rose-400"></i> ${escapeHtml(asig.fechaEntrega || 'A convenir')}`;
+        modalProfesor.innerHTML = `<i data-lucide="user-check" class="w-3.5 h-3.5 text-emerald-400"></i> ${escapeHtml(asig.profesor || 'Docente a cargo')}`;
+        modalDescripcion.textContent = asig.descripcion || 'Sin descripción adicional provista.';
+
+        detailModal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      function closeModal() {
+        detailModal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      }
+
+      function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Event Listeners
+      searchInput.addEventListener('input', applyFilters);
+      btnClearSearch.addEventListener('click', () => {
+        searchInput.value = '';
+        applyFilters();
+        searchInput.focus();
+      });
+
+      courseSelect.addEventListener('change', applyFilters);
+
+      btnResetFilters.addEventListener('click', () => {
+        searchInput.value = '';
+        courseSelect.value = '';
+        activeSubjectFilter = 'Todas';
+        renderSubjectPills();
+        applyFilters();
+      });
+
+      btnManualRefresh.addEventListener('click', () => {
+        loadAssignments(true);
+      });
+
+      modalBackdrop.addEventListener('click', closeModal);
+      btnCloseModal.addEventListener('click', closeModal);
+      btnModalCloseSecondary.addEventListener('click', closeModal);
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !detailModal.classList.contains('hidden')) {
+          closeModal();
+        }
+      });
+
+      // Inicialización
+      document.addEventListener('DOMContentLoaded', () => {
+        loadAssignments();
+        if (window.lucide) {
+          window.lucide.createIcons();
+        }
+      });
+
+    })();
+  </script>
+</body>
+</html>
+

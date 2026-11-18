@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EducTrack — Panel Docente</title>
+<script src="security.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --bg-page: #120304;
+    --red-bright: #ff3b3b;
+    --red-top: #b01c1c;
+    --red-mid: #8a1014;
+    --red-dark: #54080a;
+    --wine: #2a0507;
+    --card: rgba(65, 8, 10, 0.78);
+    --card-border: rgba(255, 69, 69, 0.25);
+    --card-hover: rgba(120, 15, 18, 0.88);
+    --text: #ffffff;
+    --text-soft: rgba(255, 255, 255, 0.75);
+    --green: #12b45a;
+    --green-dark: #0b8a42;
+    --amber: #f59e0b;
+    --font-main: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-page);
+    background-image: 
+      radial-gradient(ellipse at 50% 10%, rgba(176, 28, 28, 0.35) 0%, transparent 65%),
+      radial-gradient(circle at 85% 85%, rgba(138, 16, 20, 0.25) 0%, transparent 55%);
+    font-family: var(--font-main);
+    color: var(--text);
+    padding: 16px 12px;
+  }
+
+  /* Barra superior de conectividad */
+  .portal-bar {
+    width: 100%;
+    max-width: 440px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-soft);
+    padding: 0 6px 8px 6px;
+    transition: max-width 0.3s ease;
+  }
+  .portal-bar .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+  .portal-bar .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+  }
+  .portal-bar .active-context-tag {
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 3px 10px;
+    border-radius: 12px;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .portal-bar .active-context-tag:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Chasis Principal Responsive */
+  .app {
+    width: 100%;
+    max-width: 440px;
+    min-height: 720px;
+    border-radius: 26px;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--red-top) 0%, var(--red-mid) 40%, var(--wine) 100%);
+    border: 2px solid rgba(255, 69, 69, 0.3);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75), 0 0 35px rgba(176, 28, 28, 0.25);
+    padding: 20px 20px 28px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: max-width 0.3s ease, min-height 0.3s ease, padding 0.3s ease;
+  }
+
+  /* Encabezado del Perfil */
+  .profile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: -20px -20px 20px -20px;
+    padding: 16px 20px;
+    background: rgba(18, 2, 4, 0.65);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .profile-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #555, #111 75%);
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    color: #fff;
+  }
+  .profile h1 {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+
+  .logout-btn {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #fff;
+    padding: 7px 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+  }
+  .logout-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+  }
+
+  /* Sección de Bienvenida */
+  .welcome {
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .welcome h2 {
+    font-size: 23px;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+  .welcome p {
+    font-size: 13.5px;
+    font-style: italic;
+    color: var(--text-soft);
+    margin-top: 4px;
+  }
+
+  /* Píldora de Selección de Curso / Materia */
+  .active-context-pill {
+    background: rgba(0, 0, 0, 0.45);
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    border-radius: 20px;
+    padding: 8px 18px;
+    margin: 0 auto 18px auto;
+    width: fit-content;
+    font-size: 13.5px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  }
+  .active-context-pill:hover {
+    background: rgba(0, 0, 0, 0.75);
+    transform: translateY(-1px) scale(1.02);
+    border-color: var(--red-bright);
+    box-shadow: 0 6px 18px rgba(255, 59, 59, 0.25);
+  }
+  .active-context-pill .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+  }
+  .active-context-pill .pill-action {
+    font-size: 11px;
+    color: var(--text-soft);
+    background: rgba(255, 255, 255, 0.12);
+    padding: 3px 9px;
+    border-radius: 10px;
+    margin-left: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+  }
+  .active-context-pill:hover .pill-action {
+    background: var(--red-bright);
+    color: #fff;
+  }
+
+  /* Botón cerrar modal (x) */
+  .modal-close-btn {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+    background: rgba(255, 255, 255, 0.14);
+    border: none;
+    color: #fff;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    line-height: 1;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+  }
+
+  /* Métricas Resumen */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .metric {
+    background: rgba(45, 4, 6, 0.85);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 14px 10px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+    transition: transform 0.2s ease;
+  }
+  .metric:hover {
+    transform: translateY(-2px);
+  }
+  .metric strong {
+    display: block;
+    font-size: 22px;
+    font-weight: 900;
+    color: #ffffff;
+  }
+  .metric span {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-soft);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Botón selector de curso */
+  .invite {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 260px;
+    padding: 11px 22px;
+    border: none;
+    border-radius: 12px;
+    background: var(--green);
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    margin: 0 auto 20px;
+    transition: background 0.2s, transform 0.15s;
+    box-shadow: 0 4px 14px rgba(18, 180, 90, 0.4);
+    text-decoration: none;
+  }
+  .invite:hover {
+    background: var(--green-dark);
+    transform: translateY(-1px);
+  }
+  .invite svg { width: 18px; height: 18px; }
+
+  /* Menú de Acciones Principales */
+  .menu {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .menu a {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 20px;
+    min-height: 80px;
+    border-radius: 18px;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: 800;
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  }
+  .menu a:hover {
+    background: var(--card-hover);
+    transform: translateY(-2px);
+    border-color: rgba(255, 69, 69, 0.6);
+  }
+  .menu a:focus-visible, .invite:focus-visible, .logout-btn:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+  }
+  .menu svg {
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    fill: none;
+    stroke: #ffffff;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+  }
+  .menu span {
+    flex: 1;
+    text-align: center;
+    padding-right: 38px;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── Modal selección de curso ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 2, 3, 0.86);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+    padding: 16px;
+  }
+  .modal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .modal-card {
+    width: 100%;
+    max-width: 360px;
+    max-height: 85vh;
+    background: linear-gradient(160deg, #b01c1c 0%, #4a0808 100%);
+    border-radius: 24px;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 25px 65px rgba(0, 0, 0, 0.85);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+  }
+  .modal-header {
+    padding: 24px 20px 14px;
+    flex-shrink: 0;
+  }
+  .modal-body {
+    overflow-y: auto;
+    max-height: 320px;
+    padding: 0 20px 24px;
+    scroll-behavior: smooth;
+  }
+  body.modal-open { overflow: hidden; }
+  .modal-body::-webkit-scrollbar { width: 5px; }
+  .modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; }
+  .modal-overlay.hidden .modal-card { transform: translateY(20px); }
+  
+  .modal-card h2 {
+    font-size: 21px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .modal-card p {
+    font-size: 13.5px;
+    font-style: italic;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 16px;
+  }
+  .curso-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .curso-btn {
+    background: rgba(180, 20, 20, 0.75);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 14px;
+    padding: 14px 8px 10px;
+    color: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.18s, transform 0.15s;
+  }
+  .curso-btn:hover {
+    background: rgba(230, 30, 30, 0.95);
+    transform: translateY(-2px);
+  }
+  .curso-btn strong {
+    display: block;
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .curso-btn span {
+    display: block;
+    font-size: 11px;
+    color: rgba(255,255,255,0.75);
+    margin-top: 5px;
+  }
+
+  /* ── Modal selección de materia ── */
+  .materia-btn {
+    background: rgba(180, 20, 20, 0.75);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.18s, transform 0.15s;
+    margin-bottom: 10px;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .materia-btn:hover {
+    background: rgba(230, 30, 30, 0.95);
+    transform: translateX(4px);
+  }
+  .modal-back {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.75);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    padding: 8px 0;
+    display: block;
+    width: 100%;
+    text-align: center;
+    transition: color 0.15s;
+  }
+  .modal-back:hover { color: #fff; text-decoration: underline; }
+
+  /* ==========================================================================
+     BREAKPOINTS ESTRATÉGICOS: TABLET (641px - 1024px)
+     ========================================================================== */
+  @media (min-width: 641px) and (max-width: 1024px) {
+    body { padding: 24px 18px; }
+    .portal-bar { max-width: 760px; font-size: 14px; }
+    .app {
+      max-width: 760px;
+      min-height: auto;
+      padding: 24px 28px 32px;
+      border-radius: 28px;
+    }
+    .profile {
+      margin: -24px -28px 24px -28px;
+      padding: 18px 28px;
+    }
+    .profile h1 { font-size: 26px; }
+
+    /* Menú en rejilla de 2 columnas para Tablet */
+    .menu {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    .menu a {
+      min-height: 92px;
+      padding: 18px 24px;
+      font-size: 19px;
+    }
+    .metrics {
+      max-width: 540px;
+      margin: 0 auto 20px auto;
+    }
+    .modal-card { max-width: 440px; }
+  }
+
+  /* ==========================================================================
+     BREAKPOINTS ESTRATÉGICOS: PC / ESCRITORIO (> 1024px)
+     ========================================================================== */
+  @media (min-width: 1025px) {
+    body { padding: 32px 24px; }
+    .portal-bar {
+      max-width: 1040px;
+      font-size: 14px;
+      padding: 0 10px 10px 10px;
+    }
+    .app {
+      max-width: 1040px;
+      min-height: auto;
+      padding: 30px 36px 40px;
+      border-radius: 32px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85), 0 0 50px rgba(176, 28, 28, 0.28);
+    }
+    .profile {
+      margin: -30px -36px 30px -36px;
+      padding: 22px 36px;
+    }
+    .profile h1 { font-size: 28px; }
+
+    /* Dashboard en 2 paneles: Resumen/Métricas a la izquierda, Menú a la derecha */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+    .dashboard-left {
+      background: rgba(18, 2, 4, 0.45);
+      border: 1px solid var(--card-border);
+      border-radius: 22px;
+      padding: 24px 20px;
+    }
+    .menu {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+    .menu a {
+      min-height: 104px;
+      padding: 22px 26px;
+      font-size: 20px;
+    }
+    .modal-card { max-width: 480px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Barra superior institucional -->
+  <div class="portal-bar">
+    <div class="status-indicator">
+      <span class="status-dot"></span>
+      <span id="lblConexionBD">Conectado a Base de Datos (MySQL)</span>
+    </div>
+    <div class="active-context-tag" id="btnContextoBar" title="Haz clic para cambiar curso o materia">
+      <i class="fa-solid fa-graduation-cap"></i> <span id="labelBarraContexto">4B • Matemáticas</span>
+    </div>
+  </div>
+
+  <!-- Contenedor Principal Adaptativo -->
+  <main class="app">
+    <header class="profile">
+      <div class="profile-left">
+        <div class="avatar" id="profesorAvatar"><i class="fa-solid fa-user-tie"></i></div>
+        <h1>Panel docente</h1>
+      </div>
+      <button class="logout-btn" id="btnLogout" title="Cerrar Sesión">
+        <i class="fa-solid fa-right-from-bracket"></i> Salir
+      </button>
+    </header>
+
+    <div class="dashboard-layout">
+      <!-- Panel Lateral Izquierdo (En Desktop) / Superior (En Mobile) -->
+      <div class="dashboard-left">
+        <section class="welcome">
+          <h2 id="profWelcomeTitle">Bienvenido<br><span id="profesorNombre">Profesor</span></h2>
+          <p>¿Qué quiere hacer ahora?</p>
+        </section>
+
+        <!-- Selector único y centralizado de curso y materia activa -->
+        <div style="text-align:center;">
+          <div class="active-context-pill" id="btnCambiarCurso" title="Haz clic para cambiar curso o materia" role="button" tabindex="0">
+            <span class="dot"></span>
+            <span id="labelContextoActivo">Curso: 4B • Matemáticas</span>
+            <span class="pill-action"><i class="fa-solid fa-pen-to-square"></i> Cambiar</span>
+          </div>
+        </div>
+
+        <section class="metrics" aria-label="Resumen de Métricas">
+          <div class="metric">
+            <strong id="metricReunion">9/7</strong>
+            <span>Reunión clase</span>
+          </div>
+          <div class="metric">
+            <strong id="metricAlumnos">28</strong>
+            <span>Alumnos a cargo</span>
+          </div>
+        </section>
+      </div>
+
+      <!-- Menú de Módulos (Asistencia, Notas, Pendientes, Tareas) -->
+      <nav class="menu" aria-label="Menú principal">
+        <a href="asistencia.html" id="linkAsistencia">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="14" r="8"/><path d="M8 42c0-9 7-15 16-15s16 6 16 15"/></svg>
+          <span>Asistencia</span>
+        </a>
+        <a href="notas.html" id="linkNotas">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 5h17l9 9v29H12z"/><path d="M29 5v9h9M18 22h14M18 29h14M18 36h14"/></svg>
+          <span>Notas</span>
+        </a>
+        <a href="recordatorios.html" id="linkRecordatorios">
+          <svg viewBox="0 0 48 48" aria-hidden="true">
+            <path d="M24 7c-6.6 0-12 5.4-12 12v10l-4 4v2h32v-2l-4-4V19c0-6.6-5.4-12-12-12z"/>
+            <path d="M20 38a4 4 0 0 0 8 0"/>
+          </svg>
+          <span>Recordatorios</span>
+        </a>
+        <a href="tareas.html" id="linkTareas">
+          <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="9" width="38" height="9" rx="1"/><path d="M8 18v22h32V18M19 26h10"/></svg>
+          <span>Tareas</span>
+        </a>
+      </nav>
+    </div>
+  </main>
+
+  <!-- Modal 1: Selección de Curso -->
+  <div class="modal-overlay hidden" id="modalCurso" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <div class="modal-header" style="position:relative;">
+        <button type="button" class="modal-close-btn" onclick="cerrarTodosLosModales()" aria-label="Cerrar modal">&times;</button>
+        <h2 id="modalTitle">Bienvenido Profesor</h2>
+        <p>Seleccione un curso para comenzar</p>
+      </div>
+      <div class="modal-body">
+        <div class="curso-grid" id="cursoGridContainer">
+          <button class="curso-btn" onclick="elegirCurso('1A')"><strong>1A</strong><span>Primero A</span></button>
+          <button class="curso-btn" onclick="elegirCurso('1B')"><strong>1B</strong><span>Primero B</span></button>
+          <button class="curso-btn" onclick="elegirCurso('2A')"><strong>2A</strong><span>Segundo A</span></button>
+          <button class="curso-btn" onclick="elegirCurso('2B')"><strong>2B</strong><span>Segundo B</span></button>
+          <button class="curso-btn" onclick="elegirCurso('3A')"><strong>3A</strong><span>Tercero A</span></button>
+          <button class="curso-btn" onclick="elegirCurso('3B')"><strong>3B</strong><span>Tercero B</span></button>
+          <button class="curso-btn" onclick="elegirCurso('4A')"><strong>4A</strong><span>Cuarto A</span></button>
+          <button class="curso-btn" onclick="elegirCurso('4B')"><strong>4B</strong><span>Cuarto B</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Selección de Materia (Apartado Distinto) -->
+  <div class="modal-overlay hidden" id="modalMateria" role="dialog" aria-modal="true" aria-labelledby="modalMateriaTitle">
+    <div class="modal-card">
+      <div class="modal-header" style="position:relative;">
+        <button type="button" class="modal-close-btn" onclick="cerrarTodosLosModales()" aria-label="Cerrar modal">&times;</button>
+        <h2 id="modalMateriaTitle">Curso: <span id="cursoLabel">4B</span></h2>
+        <p>Seleccione la materia</p>
+      </div>
+      <div class="modal-body">
+        <div id="materiaBodyContainer">
+          <button class="materia-btn" onclick="elegirMateria('Matemáticas')"><i class="fa-solid fa-calculator" style="margin-right:8px"></i> Matemáticas</button>
+          <button class="materia-btn" onclick="elegirMateria('Base de datos')"><i class="fa-solid fa-database" style="margin-right:8px"></i> Base de datos</button>
+          <button class="materia-btn" onclick="elegirMateria('Historia')"><i class="fa-solid fa-landmark" style="margin-right:8px"></i> Historia</button>
+          <button class="materia-btn" onclick="elegirMateria('Lenguaje')"><i class="fa-solid fa-book-open" style="margin-right:8px"></i> Lenguaje</button>
+          <button class="materia-btn" onclick="elegirMateria('Ciencias')"><i class="fa-solid fa-flask" style="margin-right:8px"></i> Ciencias</button>
+          <button class="materia-btn" onclick="elegirMateria('Inglés')"><i class="fa-solid fa-globe" style="margin-right:8px"></i> Inglés</button>
+          <button class="materia-btn" onclick="elegirMateria('Educación Física')"><i class="fa-solid fa-volleyball" style="margin-right:8px"></i> Educación Física</button>
+        </div>
+        <button type="button" class="modal-back" onclick="volverACurso()">← Volver a selección de curso</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let cursosData = [];
+
+    // ── Contexto de Sesión Único y Persistente ─────────────────────────
+    function obtenerContextoGuardado() {
+      const curso = sessionStorage.getItem('cursoActivo');
+      const materia = sessionStorage.getItem('materiaActiva');
+      return { curso, materia };
+    }
+
+    function guardarContexto(curso, materia) {
+      if (curso) {
+        sessionStorage.setItem('cursoActivo', curso);
+        localStorage.setItem('cursoActivo', curso);
+      }
+      if (materia) {
+        sessionStorage.setItem('materiaActiva', materia);
+        localStorage.setItem('materiaActiva', materia);
+      }
+    }
+
+    function actualizarPildoraContexto() {
+      const ctx = obtenerContextoGuardado();
+      const curso = ctx.curso || '4B';
+      const materia = ctx.materia || 'Matemáticas';
+      const label = document.getElementById('labelContextoActivo');
+      const labelBar = document.getElementById('labelBarraContexto');
+      if (label) label.textContent = `Curso: ${curso} • ${materia}`;
+      if (labelBar) labelBar.textContent = `${curso} • ${materia}`;
+    }
+
+    // ── 1. Validación de Sesión JWT & Carga desde PostgreSQL ───────────
+    async function inicializarDashboard() {
+      const token = localStorage.getItem('token');
+      const rawUser = localStorage.getItem('usuario');
+
+      if (!token || !rawUser) {
+        console.warn('[EducTrack] Sesión no válida. Redirigiendo a login...');
+        window.location.href = 'login/docente.html';
+        return;
+      }
+
+      try {
+        const usuario = JSON.parse(rawUser);
+        if (usuario.rol !== 'profesor') {
+          window.location.href = 'login/docente.html';
+          return;
+        }
+
+        const nombreDocente = usuario.nombre || usuario.usuario || 'Profesor';
+        document.getElementById('profesorNombre').textContent = nombreDocente;
+
+        // Conectar con el backend
+        const response = await fetch('http://localhost:3000/api/profesor/dashboard', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.ok) {
+            if (data.profesor && data.profesor.nombreCompleto) {
+              document.getElementById('profesorNombre').textContent = data.profesor.nombreCompleto;
+            }
+            if (data.metricas) {
+              document.getElementById('metricAlumnos').textContent = data.metricas.totalAlumnos || '28';
+              document.getElementById('metricReunion').textContent = data.metricas.proximaReunion || '9/7';
+            }
+            if (data.cursos && data.cursos.length > 0) {
+              cursosData = data.cursos;
+              renderizarCursosEnModal(cursosData);
+            }
+          }
+        } else if (response.status === 401 || response.status === 403) {
+          cerrarSesion();
+        }
+      } catch (err) {
+        console.warn('[EducTrack] Servidor local / Modo offline:', err.message);
+      }
+    }
+
+    function renderizarCursosEnModal(cursos) {
+      const grid = document.getElementById('cursoGridContainer');
+      if (!grid) return;
+
+      grid.innerHTML = '';
+      cursos.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className = 'curso-btn';
+        btn.onclick = () => elegirCurso(c.nombre);
+        btn.innerHTML = `<strong>${c.nombre}</strong><span>${c.descripcion || 'Curso ' + c.nombre}</span>`;
+        grid.appendChild(btn);
+      });
+    }
+
+    function renderizarMateriasPorCurso(nombreCurso) {
+      const container = document.getElementById('materiaBodyContainer');
+      if (!container) return;
+
+      const cursoObj = cursosData.find(c => c.nombre === nombreCurso);
+      const materias = cursoObj && cursoObj.materias && cursoObj.materias.length > 0
+        ? cursoObj.materias
+        : [
+            { nombre: 'Matemáticas' }, { nombre: 'Base de datos' }, { nombre: 'Historia' },
+            { nombre: 'Lenguaje' }, { nombre: 'Ciencias' }, { nombre: 'Inglés' }, { nombre: 'Educación Física' }
+          ];
+
+      container.innerHTML = '';
+      materias.forEach(m => {
+        const btn = document.createElement('button');
+        btn.className = 'materia-btn';
+        btn.onclick = () => elegirMateria(m.nombre);
+        btn.innerHTML = `<i class="fa-solid fa-book-open" style="margin-right:10px"></i> ${m.nombre}`;
+        container.appendChild(btn);
+      });
+    }
+
+    // ── 2. Manejo de Apartados Distintos: Curso -> Materia ─────────────
+    function abrirModalCursos() {
+      document.body.classList.add('modal-open');
+      document.getElementById('modalMateria').classList.add('hidden');
+      document.getElementById('modalCurso').classList.remove('hidden');
+    }
+
+    function cerrarTodosLosModales() {
+      document.getElementById('modalCurso').classList.add('hidden');
+      document.getElementById('modalMateria').classList.add('hidden');
+      document.body.classList.remove('modal-open');
+      const ctx = obtenerContextoGuardado();
+      if (!ctx.curso) {
+        guardarContexto('4B', 'Matemáticas');
+      }
+      actualizarPildoraContexto();
+    }
+
+    function elegirCurso(curso) {
+      sessionStorage.setItem('cursoActivo', curso);
+      document.getElementById('cursoLabel').textContent = curso;
+
+      renderizarMateriasPorCurso(curso);
+
+      // Cerrar apartado de curso y abrir el apartado distinto de materia
+      document.getElementById('modalCurso').classList.add('hidden');
+      document.getElementById('modalMateria').classList.remove('hidden');
+    }
+
+    function elegirMateria(materia) {
+      const curso = sessionStorage.getItem('cursoActivo') || '4B';
+      guardarContexto(curso, materia);
+
+      // Cerrar apartado de materias y volver al panel
+      document.getElementById('modalMateria').classList.add('hidden');
+      document.body.classList.remove('modal-open');
+      actualizarPildoraContexto();
+    }
+
+    function volverACurso() {
+      // Regresar del apartado de materias al apartado de cursos
+      document.getElementById('modalMateria').classList.add('hidden');
+      document.getElementById('modalCurso').classList.remove('hidden');
+    }
+
+    function cerrarSesion() {
+      if (confirm('¿Desea cerrar la sesión del panel docente?')) {
+        if (typeof window.cerrarSesionSegura === 'function') {
+          window.cerrarSesionSegura('login/docente.html');
+        } else {
+          localStorage.removeItem('token');
+          localStorage.removeItem('usuario');
+          localStorage.removeItem('cursoActivo');
+          localStorage.removeItem('materiaActiva');
+          sessionStorage.clear();
+          window.location.replace('login/docente.html');
+        }
+      }
+    }
+
+    document.getElementById('btnLogout').addEventListener('click', cerrarSesion);
+    document.getElementById('btnCambiarCurso').addEventListener('click', abrirModalCursos);
+    const btnContextoBar = document.getElementById('btnContextoBar');
+    if (btnContextoBar) btnContextoBar.addEventListener('click', abrirModalCursos);
+
+    // Cierre con clic fuera del modal
+    document.getElementById('modalCurso').addEventListener('click', (e) => {
+      if (e.target.id === 'modalCurso') {
+        const ctx = obtenerContextoGuardado();
+        if (ctx.curso) cerrarTodosLosModales();
+      }
+    });
+
+    document.getElementById('modalMateria').addEventListener('click', (e) => {
+      if (e.target.id === 'modalMateria') {
+        const ctx = obtenerContextoGuardado();
+        if (ctx.curso && ctx.materia) cerrarTodosLosModales();
+      }
+    });
+
+    // ── 3. Inicialización Controlada ──────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      inicializarDashboard();
+
+      // Abrir selector al iniciar sesión o si no hay curso activo en la sesión
+      const forzarApertura = sessionStorage.getItem('abrirSelectorCurso') === 'true';
+      const cursoActivo = sessionStorage.getItem('cursoActivo');
+
+      if (forzarApertura || !cursoActivo) {
+        sessionStorage.removeItem('abrirSelectorCurso');
+        abrirModalCursos();
+      } else {
+        actualizarPildoraContexto();
+      }
+    });
+  </script>
+</body>
+</html>

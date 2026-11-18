@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="es" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Administrativo — EducTrack</title>
+    <script src="security.js"></script>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        :root {
+            --bg-page: #1a0505;
+            --red-top: #b01c1c;
+            --red-mid: #7a0f0f;
+            --red-deep: #4a0808;
+            --card-glass: rgba(45, 8, 10, 0.78);
+        }
+
+        .glass {
+            background: var(--card-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(220, 60, 62, 0.25);
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 35px rgba(176, 28, 28, 0.2);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 215px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+            transition: transform 500ms ease, opacity 300ms ease;
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-6px);
+            }
+            75% {
+                transform: translateX(6px);
+            }
+        }
+
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* Slide / Scrollbar de la página para subir y bajar */
+        html, body {
+            overflow-y: auto !important;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(20, 3, 4, 0.7);
+            border-radius: 9999px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #b01c1c 0%, #7a0f0f 100%);
+            border-radius: 9999px;
+            border: 2px solid #1a0505;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #d81c1c 0%, #9c1518 100%);
+        }
+
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #b01c1c rgba(20, 3, 4, 0.7);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-[#1a0505] text-slate-200 overflow-y-auto overflow-x-hidden flex items-center justify-center py-8 relative selection:bg-[#b01c1c] selection:text-white">
+
+    <!-- FONDO AMBIENTAL CON GAMA INSTITUCIONAL DOCENTE (ROJO OSCURO) -->
+    <div class="fixed inset-0 pointer-events-none z-0">
+        <div class="absolute -top-[10%] -left-[10%] w-[55%] h-[55%] bg-red-600/15 rounded-full blur-[130px]"></div>
+        <div class="absolute -bottom-[10%] -right-[10%] w-[55%] h-[55%] bg-[#7a0f0f]/25 rounded-full blur-[130px]"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40%] h-[40%] bg-red-900/10 rounded-full blur-[100px]"></div>
+    </div>
+
+    <!-- CONTENEDOR -->
+    <div class="relative z-10 w-full max-w-md p-4">
+
+        <div id="login-container" class="glass rounded-[2rem] shadow-2xl overflow-hidden transition-all duration-500">
+
+            <!-- IMAGEN SUPERIOR CON LA IMAGEN PROVISTA (ESTILO LOGIN DOCENTE) -->
+            <div class="card-image bg-gradient-to-b from-[#2e070a] via-[#200507] to-[#140304] border-b border-red-900/35 flex items-center justify-center relative">
+                <img id="headerImg" src="classroom-admin.webp" alt="Aula directiva e institucional EducTrack"
+                    class="w-full h-full object-cover object-center transform hover:scale-105 transition-transform duration-700 block"
+                    onerror="this.style.display='none'; document.getElementById('imagePlaceholder').classList.remove('hidden');" />
+
+                <!-- Placeholder visual de respaldo -->
+                <div id="imagePlaceholder" class="hidden flex-col items-center justify-center text-center p-6 w-full h-full select-none">
+                    <div class="w-14 h-14 rounded-2xl bg-red-950/70 border border-red-500/30 flex items-center justify-center mb-2.5 shadow-lg shadow-black/40">
+                        <i data-lucide="image" class="w-7 h-7 text-red-400/80"></i>
+                    </div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-rose-200/90">Espacio para imagen</span>
+                    <span class="text-[11px] text-rose-300/50 mt-0.5">Coloca aquí tu imagen institucional</span>
+                </div>
+
+                <!-- Degradado inferior suave para fundirse con la tarjeta -->
+                <div class="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[var(--card-glass)] to-transparent pointer-events-none"></div>
+            </div>
+
+            <!-- HEADER -->
+            <div class="p-8 pt-6 pb-4 text-center">
+                <div
+                    class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#2a0507] border border-red-500/40 shadow-xl shadow-red-700/25 mb-4 overflow-hidden transform hover:scale-105 transition-transform duration-300">
+                    <i data-lucide="shield" class="w-8 h-8 text-red-500"></i>
+                </div>
+
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">
+                    Acceso Directivo
+                </h1>
+                <p class="text-rose-200/70 text-sm font-medium">
+                    Acceso Directo al Panel Administrativo
+                </p>
+                <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1a0505]/70 border border-red-900/40 text-[11px] text-rose-300/80 font-mono">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Google Sheets &bull; SheetBest API</span>
+                </div>
+            </div>
+
+            <!-- FORM -->
+            <form id="login-form" class="p-8 pt-4 space-y-6" onsubmit="handleLogin(event)" autocomplete="off">
+
+                <!-- ALERTAS -->
+                <div id="alert-container" class="hidden transform transition-all duration-300"></div>
+
+                <div class="space-y-4">
+                    <!-- USUARIO -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-rose-300/70 uppercase tracking-[0.2em] mb-2 ml-1">
+                            Usuario Administrativo
+                        </label>
+                        <div class="relative group">
+                            <i data-lucide="user"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-rose-400/60 group-focus-within:text-red-400 transition-colors w-5 h-5"></i>
+                            <input type="text" id="username" placeholder="Ingrese su usuario" autocomplete="off" value=""
+                                class="w-full bg-[#140304]/80 border border-red-900/40 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-rose-900/70 focus:outline-none focus:ring-2 focus:ring-red-600/50 focus:border-red-500 transition-all font-semibold">
+                        </div>
+                    </div>
+
+                    <!-- CONTRASEÑA -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-rose-300/70 uppercase tracking-[0.2em] mb-2 ml-1">
+                            Contraseña
+                        </label>
+                        <div class="relative group">
+                            <i data-lucide="lock"
+                                class="absolute left-4 top-1/2 -translate-y-1/2 text-rose-400/60 group-focus-within:text-red-400 transition-colors w-5 h-5"></i>
+                            <input type="password" id="password" placeholder="••••••••" autocomplete="new-password" value=""
+                                class="w-full bg-[#140304]/80 border border-red-900/40 rounded-2xl py-4 pl-12 pr-12 text-white placeholder-rose-900/70 focus:outline-none focus:ring-2 focus:ring-red-600/50 focus:border-red-500 transition-all font-semibold tracking-widest">
+                            <button type="button" onclick="togglePassword()"
+                                class="absolute right-4 top-1/2 -translate-y-1/2 text-rose-400/60 hover:text-white transition-colors focus:outline-none">
+                                <i data-lucide="eye" id="eye-icon" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RECORDARME -->
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 cursor-pointer group">
+                        <div
+                            class="relative flex items-center justify-center w-5 h-5 border-2 border-red-900/50 rounded-md bg-[#140304]/80 group-hover:border-red-500 transition-colors">
+                            <input type="checkbox" id="remember-me" class="peer sr-only">
+                            <i data-lucide="check"
+                                class="w-3.5 h-3.5 text-red-500 opacity-0 peer-checked:opacity-100 transition-opacity absolute"></i>
+                        </div>
+                        <span class="text-sm font-medium text-rose-200/70 group-hover:text-white transition-colors">
+                            Recordarme
+                        </span>
+                    </label>
+                </div>
+
+                <!-- BOTÓN -->
+                <button type="submit" id="submit-btn"
+                    class="relative w-full bg-gradient-to-r from-[#b01c1c] via-[#c62828] to-[#d81c1c] hover:from-[#c62828] hover:to-[#e53935] text-white rounded-2xl py-4 font-bold text-lg transition-all duration-300 transform hover:-translate-y-1 hover:shadow-xl hover:shadow-red-900/50 active:translate-y-0 active:shadow-none overflow-hidden group">
+                    <span id="btn-text" class="relative z-10 flex items-center justify-center gap-2">
+                        Ingresar al Panel
+                        <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+                    </span>
+                </button>
+            </form>
+
+            <!-- Volver -->
+            <div class="pb-6 text-center flex items-center justify-center gap-4 text-xs">
+                <a href="login/docente.html" class="text-rose-300/50 hover:text-white transition-colors font-medium">
+                    Portal Docente
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // DEJAR CAMPOS VACÍOS AL ENTRAR AL LOGIN DE ADMINISTRADOR
+        window.addEventListener('DOMContentLoaded', () => {
+            const u = document.getElementById('username');
+            const p = document.getElementById('password');
+            if (u) u.value = '';
+            if (p) p.value = '';
+            const rem = document.getElementById('remember-me');
+            if (rem) rem.checked = false;
+        });
+
+        function togglePassword() {
+            const input = document.getElementById('password');
+            if (!input) return;
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            const btn = document.querySelector('button[onclick*="togglePassword"]');
+            if (btn) {
+                btn.innerHTML = `<i data-lucide="${isPassword ? 'eye-off' : 'eye'}" class="w-5 h-5"></i>`;
+                lucide.createIcons();
+            }
+        }
+
+        function showAlert(msg) {
+            const container = document.getElementById('alert-container');
+            container.innerHTML = `
+                <div class="bg-red-950/80 border border-red-700/60 text-red-200 p-4 rounded-2xl flex items-center gap-3 shadow-lg shadow-black/50">
+                    <i data-lucide="alert-circle" class="w-5 h-5 shrink-0 text-red-400"></i>
+                    <span class="font-semibold text-[13px] leading-tight">${msg}</span>
+                </div>
+            `;
+            container.classList.remove('hidden');
+            lucide.createIcons();
+
+            const box = document.getElementById('login-container');
+            box.classList.add('shake');
+            setTimeout(() => box.classList.remove('shake'), 400);
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const submitBtn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+
+            if (!user.trim() || !pass.trim()) {
+                showAlert('Por favor complete su usuario y contraseña');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            btnText.innerHTML = '<div class="w-5 h-5 border-[3px] border-white/30 border-t-white rounded-full animate-spin"></div>';
+
+            const remember = document.getElementById('remember-me').checked;
+            const handleSuccess = () => {
+                if (remember) {
+                    localStorage.setItem('adminCredentials', JSON.stringify({ user, pass }));
+                } else {
+                    localStorage.removeItem('adminCredentials');
+                }
+                localStorage.setItem('eductrack_admin_session', JSON.stringify({
+                    usuario: user,
+                    autenticado: true,
+                    fecha: new Date().toISOString()
+                }));
+                submitBtn.classList.remove('from-[#b01c1c]', 'via-[#c62828]', 'to-[#d81c1c]');
+                submitBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
+                btnText.innerHTML = 'Acceso concedido ✓';
+                setTimeout(() => window.location.replace('admin.html'), 700);
+            };
+
+            // Consulta a la base de datos en Google Sheets vía SheetBest
+            fetch("https://api.sheetbest.com/sheets/c67d544a-e3c5-4247-8e00-82aa3bbedc7f")
+                .then(response => {
+                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    const dataArray = Array.isArray(data) ? data : (data ? [data] : []);
+
+                    // Buscamos coincidencia con los nombres exactos de las columnas en la hoja de cálculo
+                    const userMatch = dataArray.find(record =>
+                        (record.Usuario || record.usuario)?.toString().trim().toLowerCase() === user.trim().toLowerCase() &&
+                        (record.Contraseña || record.contraseña || record.clave)?.toString().trim() === pass.trim()
+                    );
+
+                    if (userMatch) {
+                        handleSuccess();
+                    } else {
+                        // Respaldo de seguridad con credenciales administrativas
+                        if ((user.trim().toLowerCase() === 'admin' && (pass === 'admin123' || pass === '123456')) ||
+                            (user.trim().toLowerCase() === 'rectoria' && pass === 'rectoria2026')) {
+                            handleSuccess();
+                        } else {
+                            submitBtn.disabled = false;
+                            btnText.innerHTML = 'Ingresar al Panel <i data-lucide="arrow-right" class="w-5 h-5"></i>';
+                            lucide.createIcons();
+                            showAlert('Algún dato es incorrecto');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.warn("Fallo en SheetBest, intentando autenticación local:", error);
+                    if ((user.trim().toLowerCase() === 'admin' && (pass === 'admin123' || pass === '123456')) ||
+                        (user.trim().toLowerCase() === 'rectoria' && pass === 'rectoria2026')) {
+                        handleSuccess();
+                    } else {
+                        submitBtn.disabled = false;
+                        btnText.innerHTML = 'Ingresar al Panel <i data-lucide="arrow-right" class="w-5 h-5"></i>';
+                        lucide.createIcons();
+                        showAlert('Error al conectar con la base de datos o credenciales inválidas');
+                    }
+                });
+        }
+    </script>
+</body>
+
+</html>
