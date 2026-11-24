@@ -212,18 +212,32 @@ async function syncInitialData() {
         const [asigBD] = await pool.query('SELECT id_asignacion FROM asignacion WHERE id_materia = 3 AND id_curso = 1 LIMIT 1');
         const idAsigBD = asigBD[0]?.id_asignacion || 3;
 
-        // 6. Asegurar alumnos con contraseña 123456
-        const [existingLucas] = await pool.query('SELECT id_alumno FROM alumno WHERE usuario = ?', ['lucas_fernandez']);
-        if (existingLucas.length === 0) {
-            await pool.query(
-                `INSERT INTO alumno (nombre, apellido, usuario, contraseña, id_curso) 
-                 VALUES ('Lucas', 'Fernández', 'lucas_fernandez', '123456', 1)`
-            );
-            console.log('[EducTrack DB] Alumno lucas_fernandez creado.');
+        // 6. Asegurar todos los alumnos con sus usuarios y contraseña 123456
+        const alumnosBase = [
+            { usuario: 'alumno1',         nombre: 'Agustín',   apellido: 'Morales',   email: 'agustin.m@eductrack.cl' },
+            { usuario: 'alumno2',         nombre: 'Camila',    apellido: 'Fernández', email: 'camila.f@eductrack.cl' },
+            { usuario: 'lucas_fernandez', nombre: 'Lucas',     apellido: 'Fernández', email: 'lucas.fernandez@eductrack.cl' },
+            { usuario: 'amorales',        nombre: 'Agustín',   apellido: 'Morales',   email: 'agustin.morales@eductrack.cl' },
+            { usuario: 'cfernandez',      nombre: 'Camila',    apellido: 'Fernández', email: 'cfernandez@eductrack.cl' },
+            { usuario: 'dreyes',          nombre: 'Diego',     apellido: 'Reyes',     email: 'dreyes@eductrack.cl' },
+            { usuario: 'isilva',          nombre: 'Ignacia',   apellido: 'Silva',     email: 'isilva@eductrack.cl' },
+            { usuario: 'mcastillo',       nombre: 'Matías',    apellido: 'Castillo',  email: 'mcastillo@eductrack.cl' },
+            { usuario: 'sperez',          nombre: 'Sofía',     apellido: 'Pérez',     email: 'sperez@eductrack.cl' },
+            { usuario: 'vtorres',         nombre: 'Valentina', apellido: 'Torres',    email: 'vtorres@eductrack.cl' }
+        ];
+        for (const al of alumnosBase) {
+            const [exAl] = await pool.query('SELECT id_alumno FROM alumno WHERE usuario = ?', [al.usuario]);
+            if (exAl.length === 0) {
+                await pool.query(
+                    'INSERT INTO alumno (id_curso, usuario, `contraseña`, nombre, apellido, email) VALUES (1, ?, ?, ?, ?, ?)',
+                    [al.usuario, '123456', al.nombre, al.apellido, al.email]
+                );
+                console.log('[EducTrack DB] Alumno creado:', al.usuario);
+            } else {
+                await pool.query('UPDATE alumno SET `contraseña` = ? WHERE usuario = ?', ['123456', al.usuario]);
+            }
         }
-
-        // Asegurar que todos los alumnos tengan contraseña 123456
-        await pool.query("UPDATE alumno SET contraseña = '123456' WHERE usuario IN ('amorales', 'cfernandez', 'dreyes', 'lucas_fernandez', 'isilva', 'mcastillo', 'sperez', 'vtorres', 'alumno1', 'alumno2')");
+        console.log('[EducTrack DB] Alumnos verificados/actualizados.');
 
         // 7. Asegurar notas (incluyendo notas para Base de datos)
         const [alumnos] = await pool.query('SELECT id_alumno FROM alumno');
