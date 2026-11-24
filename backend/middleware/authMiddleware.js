@@ -38,7 +38,33 @@ const esProfesor = (req, res, next) => {
     });
 };
 
+/**
+ * Middleware para verificar que el usuario autenticado posea rol de alumno
+ */
+const esAlumno = (req, res, next) => {
+    if (req.usuario && req.usuario.rol === 'alumno') {
+        return next();
+    }
+    return res.status(403).json({
+        mensaje: 'Acceso denegado: Se requieren permisos de alumno'
+    });
+};
+
+/**
+ * Middleware para verificar que el usuario autenticado posea rol de administrador
+ */
+const esAdmin = (req, res, next) => {
+    if (req.usuario && req.usuario.rol === 'administrador') {
+        return next();
+    }
+    return res.status(403).json({
+        mensaje: 'Acceso denegado: Se requieren permisos de administrador'
+    });
+};
+
 module.exports = {
     autenticarToken,
-    esProfesor
+    esProfesor,
+    esAlumno,
+    esAdmin
 };

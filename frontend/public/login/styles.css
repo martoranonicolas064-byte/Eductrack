@@ -441,11 +441,55 @@ body.theme-estudiante .tab.active .tab-check { stroke: #3d2fd4; }
   to { transform: rotate(360deg); }
 }
 
-/* ── Responsive ───────────────────────────────────────── */
+/* ── Responsive Adaptativo (Celulares, Tablets y PCs) ───────────────── */
 @media (max-width: 480px) {
-  .card-image  { height: 180px; }
-  .card-body   { padding: 1.5rem 1.25rem 1.75rem; }
-  .brand-title { font-size: 1.3rem; }
+  body {
+    padding: 1.25rem 0.75rem;
+  }
+  .screen {
+    max-width: 100%;
+  }
+  .card-image {
+    height: 180px;
+  }
+  .card-body {
+    padding: 1.35rem 1.15rem 1.6rem;
+  }
+  .brand-title {
+    font-size: 1.3rem;
+  }
+  .field-input {
+    font-size: 16px; /* Evita auto-zoom en iOS Safari */
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+  }
+  .btn-submit {
+    min-height: 48px; /* Área táctil óptima para dedos en móvil */
+  }
+}
+
+@media (min-width: 481px) and (max-width: 1024px) {
+  body {
+    padding: 2rem 1.5rem;
+  }
+  .screen {
+    max-width: 450px;
+  }
+  .card-image {
+    height: 220px;
+  }
+  .card-body {
+    padding: 1.85rem 1.65rem 2.1rem;
+  }
+}
+
+@media (min-width: 1025px) {
+  body {
+    padding: 2.5rem 1.5rem;
+  }
+  .screen {
+    max-width: 430px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

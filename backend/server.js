@@ -13,18 +13,22 @@ const { syncInitialData } = require('./database/syncData');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Confianza en el proxy inverso (Obligatorio para Render, Heroku y AWS)
+app.set('trust proxy', 1);
+
 // Deshabilitar divulgación de información de Express
 app.disable('x-powered-by');
 
-// Cabeceras de seguridad HTTP y Anti-Caché Global (Evita volver atrás en el navegador)
+// Cabeceras de seguridad HTTP y Anti-Caché Global Estricto (Evita bfcache y retroceso en el navegador)
 app.use((req, res, next) => {
-    // Anti-caché estricto: evita que el navegador almacene páginas privadas en bfcache
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    // Anti-caché absoluto: prohíbe terminantemente almacenar páginas privadas en bfcache del navegador
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, post-check=0, pre-check=0');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'no-store');
+    res.setHeader('Clear-Site-Data', '"cache"');
 
-    // Protección contra MIME sniffing, Clickjacking y XSS
+    // Protección robusta: MIME sniffing, Clickjacking, XSS y Cross-Origin
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -32,14 +36,15 @@ app.use((req, res, next) => {
     next();
 });
 
-// Middleware de Rate Limiting para Login (Protección contra ataques de fuerza bruta bajo Node)
+// Middleware de Rate Limiting para Login (Protección contra ataques de fuerza bruta bajo Node y Render)
 const loginAttempts = new Map();
 const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000; // 5 minutos
 const MAX_LOGIN_ATTEMPTS = 15;
 
 app.use('/api/auth/login', (req, res, next) => {
     if (req.method === 'POST') {
-        const ip = req.ip || req.connection.remoteAddress || '127.0.0.1';
+        const forwarded = req.headers['x-forwarded-for'];
+        const ip = (forwarded ? forwarded.split(',')[0].trim() : null) || req.ip || req.connection.remoteAddress || '127.0.0.1';
         const now = Date.now();
         const record = loginAttempts.get(ip) || { count: 0, resetTime: now + RATE_LIMIT_WINDOW_MS };
 
