@@ -117,6 +117,20 @@ async function ensureTables() {
 
 async function syncInitialData() {
     try {
+        console.log('[EducTrack DB] Comprobando estado de inicialización...');
+        
+        // Fast-path: Si la base de datos ya está inicializada, evitar ejecutar 25 consultas DDL/DML secuenciales en el arranque
+        try {
+            const [check] = await pool.query('SELECT COUNT(*) as count FROM administrador');
+            if (check && check[0]?.count > 0) {
+                console.log('[EducTrack DB] Base de datos TiDB Cloud conectada y lista (arranque rápido).');
+                return;
+            }
+        } catch (err) {
+            // Si la tabla administrador no existe aún, procedemos a crear las tablas
+            console.log('[EducTrack DB] Inicializando tablas por primera vez...');
+        }
+
         console.log('[EducTrack DB] Verificando tablas y conectividad con la base de datos...');
         await ensureTables();
 

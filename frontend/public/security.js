@@ -137,6 +137,11 @@
         localStorage.removeItem('adminCredentials');
         sessionStorage.clear();
 
+        // Notificar al backend para depurar cookies o caché de sesión si aplica
+        try {
+            fetch('/api/auth/logout', { method: 'POST', keepalive: true }).catch(function () {});
+        } catch (e) {}
+
         // Ocultar vista actual para evitar congelamiento de fotograma en bfcache
         if (document.documentElement) {
             document.documentElement.style.visibility = 'hidden';

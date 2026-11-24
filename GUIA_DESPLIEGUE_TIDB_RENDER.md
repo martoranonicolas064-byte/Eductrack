@@ -108,3 +108,29 @@ Verás la respuesta JSON:
   "baseDeDatos": "eductrack_db"
 }
 ```
+
+---
+
+## ⚡ ¿Por qué tarda en abrir la primera vez y cómo solucionarlo?
+
+### 1. La causa: El "Spin-down" (Reposo) del Plan Gratuito de Render
+Render en su plan gratuito suspende (*pone a dormir*) los servicios web si pasan **15 minutos sin visitas**.
+Cuando alguien entra después de ese tiempo:
+- Render tiene que iniciar la máquina virtual, arrancar Node.js y conectar con TiDB Cloud.
+- Esto provoca una espera inicial de **30 a 50 segundos** ("Cold Start").
+- Una vez que la página ya despertó, todas las cargas son **ultrarrápidas e instantáneas**.
+
+### 2. Optimizaciones ya integradas en el código:
+- **Compresión Gzip activada:** El servidor ahora comprime todas las respuestas de texto, CSS, JavaScript y JSON hasta un 80% más livianas.
+- **Caché Inteligente de Recursos:** Imágenes (`classroom.png`, `student.png`), estilos CSS y scripts se almacenan en el navegador por 24 horas, eliminando re-descargas lentas al navegar entre páginas.
+- **Arranque Rápido de Base de Datos:** Se omiten 25 comprobaciones SQL pesadas en cada reinicio si las tablas ya existen en TiDB Cloud.
+- **Auto-Ping Keep-Alive:** El servidor detecta la variable `RENDER_EXTERNAL_URL` de Render y envía un ping periódico a `/api/health`.
+
+### 3. Solución Definitiva (100% Gratis para que NUNCA duerma):
+Para que la página esté despierta las 24 horas los 7 días de la semana y abra en **menos de 1 segundo siempre**:
+1. Entra a **[cron-job.org](https://cron-job.org)** o **[uptimerobot.com](https://uptimerobot.com)** (ambos son 100% gratuitos).
+2. Crea una cuenta gratuita y dale a **"Create Monitor"** o **"New Cronjob"**.
+3. Pega la URL de tu endpoint de salud:
+   `https://tu-servicio.onrender.com/api/health`
+4. Configura el intervalo cada **10 minutos**.
+5. ¡Listo! Este servicio enviará una petición ligera cada 10 minutos, impidiendo que Render suspenda la aplicación. La página abrirá al instante siempre.
