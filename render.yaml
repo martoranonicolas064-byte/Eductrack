@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: eductrack
+    env: node
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DB_HOST
+        value: gateway01.sa-east-1.prod.aws.tidbcloud.com
+      - key: DB_PORT
+        value: "4000"
+      - key: DB_USER
+        value: 2d3osCZG9bBQUe4.root
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        value: eductrack_db
+      - key: DB_SSL
+        value: "true"

@@ -674,8 +674,9 @@
             const token = localStorage.getItem('token');
             if (!token) return;
 
+            const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
             try {
-                const res = await fetch(`http://localhost:3000/api/profesor/alumnos/1`, {
+                const res = await fetch(`${API_BASE}/api/profesor/alumnos/1`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {

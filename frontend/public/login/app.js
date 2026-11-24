@@ -199,9 +199,10 @@
     const rolEsperado = isEstudiantePortal ? 'alumno' : 'profesor';
 
     try {
+      const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
       // Conectar con el backend
       const response = await fetch(
-        'http://localhost:3000/api/auth/login',
+        `${API_BASE}/api/auth/login`,
         {
           method: 'POST',
           headers: {

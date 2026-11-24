@@ -1957,8 +1957,9 @@
                     updateProfileUI();
                 }
 
+                const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
                 // 2. Conectar a la API del backend para datos dinámicos de MySQL
-                const response = await fetch("http://localhost:3000/api/alumno/dashboard", {
+                const response = await fetch(`${API_BASE}/api/alumno/dashboard`, {
                     method: "GET",
                     headers: {
                         "Authorization": `Bearer ${token}`

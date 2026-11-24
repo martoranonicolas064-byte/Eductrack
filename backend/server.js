@@ -124,21 +124,25 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// Prueba de conexión con MySQL
+// Prueba de conexión con MySQL / TiDB Cloud
 app.get('/test-db', async (req, res) => {
     try {
-        const [result] = await pool.query('SELECT 1 AS conectado');
+        const [result] = await pool.query('SELECT 1 AS conectado, VERSION() AS version, DATABASE() AS bd');
+        const verStr = result[0]?.version || '';
+        const esTiDB = verStr.toLowerCase().includes('tidb');
         res.json({
             ok: true,
-            mensaje: 'MySQL conectado correctamente',
-            motor: 'MySQL',
+            mensaje: esTiDB ? 'TiDB Cloud conectado correctamente' : 'Base de datos MySQL conectada correctamente',
+            motor: esTiDB ? 'TiDB Cloud' : 'MySQL',
+            version: verStr,
+            baseDeDatos: result[0]?.bd,
             resultado: result
         });
     } catch (error) {
-        console.error('Error de conexión a MySQL:', error);
+        console.error('Error de conexión a la base de datos:', error);
         res.status(500).json({
             ok: false,
-            mensaje: 'Error al conectar con MySQL',
+            mensaje: 'Error al conectar con la base de datos',
             error: error.message
         });
     }
@@ -172,7 +176,7 @@ app.use('/api/alumno', alumnoRoutes);
 app.use('/api/profesor', profesorRoutes);
 
 // Iniciar servidor y sincronizar datos
-app.listen(PORT, async () => {
-    console.log(`Servidor ejecutándose en http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', async () => {
+    console.log(`[EducTrack] Servidor ejecutándose en http://0.0.0.0:${PORT} (Puerto: ${PORT})`);
     await syncInitialData();
 });

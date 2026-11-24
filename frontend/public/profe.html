@@ -750,8 +750,9 @@
         const nombreDocente = usuario.nombre || usuario.usuario || 'Profesor';
         document.getElementById('profesorNombre').textContent = nombreDocente;
 
+        const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
         // Conectar con el backend
-        const response = await fetch('http://localhost:3000/api/profesor/dashboard', {
+        const response = await fetch(`${API_BASE}/api/profesor/dashboard`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
