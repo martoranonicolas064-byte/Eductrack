@@ -74,7 +74,8 @@ app.use('/api/auth/login', (req, res, next) => {
 });
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ limit: '25mb', extended: true }));
 
 // Redirigir raíz al login de docentes ANTES del static (evita que index.html sea servido en /)
 app.get('/', (req, res) => {

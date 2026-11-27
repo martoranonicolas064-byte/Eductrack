@@ -9,6 +9,7 @@
   let recordatorios = [];
   let cursosDocente = [];
   let recordatorioActivoId = null;
+  let archivoSeleccionadoBase64 = null;
 
   // ── Helper para obtener elementos de forma segura ──────────────────
   function getEl(id, fallbackSelector) {
@@ -297,11 +298,14 @@
     const inputTitulo = getEl('recordatorioTitulo');
     const inputFecha = getEl('recordatorioFecha');
     const inputArchivo = getEl('recordatorioArchivo');
+    const inputFileInput = getEl('recordatorioFileInput');
     const modalTitulo = getEl('modalTitulo');
 
+    archivoSeleccionadoBase64 = null;
     if (form) form.reset();
     if (inputId) inputId.value = '';
     if (inputArchivo) inputArchivo.value = '';
+    if (inputFileInput) inputFileInput.value = '';
     if (modalTitulo) modalTitulo.textContent = 'Crear recordatorio';
 
     // Fecha de hoy por defecto
@@ -334,6 +338,25 @@
   function inicializarEventos() {
     const btnCrear = getEl('crear_recordatorio');
     if (btnCrear) btnCrear.addEventListener('click', abrirModalCrear);
+
+    // Detección y lectura de archivo adjunto / PDF
+    const fileInput = getEl('recordatorioFileInput');
+    if (fileInput) {
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+          const file = e.target.files[0];
+          const inputArchivo = getEl('recordatorioArchivo');
+          if (inputArchivo) inputArchivo.value = file.name;
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            archivoSeleccionadoBase64 = evt.target.result;
+          };
+          reader.readAsDataURL(file);
+        } else {
+          archivoSeleccionadoBase64 = null;
+        }
+      });
+    }
 
     const btnCerrarModal = getEl('btnCerrarModal');
     if (btnCerrarModal) btnCerrarModal.addEventListener('click', cerrarModalForm);
@@ -382,11 +405,13 @@
         const inputResumen = getEl('recordatorioResumen');
         const inputFecha = getEl('recordatorioFecha');
         const selectCurso = getEl('recordatorioCursoSelect');
+        const inputArchivo = getEl('recordatorioArchivo');
 
         const titulo = inputTitulo ? inputTitulo.value.trim() : '';
         const resumen = inputResumen ? inputResumen.value.trim() : '';
         const fecha = inputFecha ? inputFecha.value : '';
         const cursoVal = selectCurso ? selectCurso.value : 'todos';
+        const archivoNombre = inputArchivo ? inputArchivo.value.trim() : '';
 
         if (!titulo || !resumen || !fecha) {
           alert('Por favor complete todos los campos obligatorios (Título, Resumen y Fecha).');
@@ -408,12 +433,14 @@
               todos_los_cursos: cursoVal === 'todos',
               titulo,
               contenido: resumen,
-              fecha_limite: fecha
+              fecha_limite: fecha,
+              archivo: archivoNombre || null,
+              archivo_data: archivoSeleccionadoBase64 || null
             })
           });
           const data = await res.json();
           if (data.ok) {
-            alert('¡Recordatorio enviado con éxito a los alumnos del curso!');
+            alert('¡Recordatorio y archivo PDF publicados con éxito para los estudiantes!');
             await cargarRecordatorios();
           } else {
             alert(data.mensaje || 'Error al guardar recordatorio');
@@ -462,7 +489,20 @@
 
     const curso = item.curso || sessionStorage.getItem('cursoActivo') || '4B';
     const materia = item.materia || sessionStorage.getItem('materiaActiva') || 'General';
-    const nombreArchivo = `${(item.titulo || 'Recordatorio').replace(/[^a-zA-Z0-9_-]/g, '_')}_${curso}.pdf`;
+    const nombreArchivo = (item.archivo && item.archivo.toLowerCase().endsWith('.pdf')) 
+      ? item.archivo 
+      : `${(item.titulo || 'Recordatorio').replace(/[^a-zA-Z0-9_-]/g, '_')}_${curso}.pdf`;
+
+    // Si se subió un archivo real en base64
+    if (item.archivo_data && item.archivo_data.startsWith('data:')) {
+      const a = document.createElement('a');
+      a.href = item.archivo_data;
+      a.download = nombreArchivo;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      return;
+    }
 
     const sanitizar = (s) => (s || '').replace(/[\r\n\t]/g, ' ').replace(/[\\()]/g, '');
     const tit = sanitizar(item.titulo);

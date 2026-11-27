@@ -72,6 +72,7 @@ const getDashboard = async (req, res) => {
         const id_curso = alumnoData.id_curso || 1;
         const [recordatorios] = await pool.query(
             `SELECT r.id_recordatorio, r.titulo, r.contenido, r.fecha_limite, r.estado,
+                    r.archivo, r.archivo_data,
                     m.nombre AS materia
              FROM recordatorio r
              JOIN asignacion a ON r.id_asignacion = a.id_asignacion
@@ -89,13 +90,14 @@ const getDashboard = async (req, res) => {
                 day: isNaN(fecha.getDate()) ? 1 : fecha.getDate(),
                 category: (r.materia || 'GENERAL').toUpperCase(),
                 text: `${r.titulo}: ${r.contenido || ''}`.trim(),
-                pdf: null
+                pdf: r.archivo || null,
+                pdf_data: r.archivo_data || null
             };
         });
 
         // 5. Archivos reales del curso
         const [archivos] = await pool.query(
-            `SELECT ar.id_archivo, ar.nombre, ar.url_archivo, ar.fecha_subida,
+            `SELECT ar.id_archivo, ar.nombre, ar.url_archivo, ar.archivo_data, ar.fecha_subida,
                     m.nombre AS materia
              FROM archivo ar
              JOIN asignacion a ON ar.id_asignacion = a.id_asignacion
@@ -113,9 +115,11 @@ const getDashboard = async (req, res) => {
             return {
                 id: f.id_archivo,
                 name: f.nombre,
-                size: '1.0 MB',
+                size: 'Documento PDF',
                 date: fechaLegible,
-                url: f.url_archivo
+                url: f.url_archivo,
+                data: f.archivo_data || null,
+                materia: f.materia || 'General'
             };
         });
 

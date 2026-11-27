@@ -1639,7 +1639,10 @@
                         <p style="margin-top: 6px; font-weight: bold;">Documento en Solo Lectura (Edge Local Cache)</p>
                     </div>
                 </div>
-                <button class="form-submit" id="modal-close-btn">Cerrar Previsualización</button>
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button class="form-submit" id="modal-download-btn" style="flex:1; background:var(--accent-green); color:#032b03; font-weight:800;"><i class="fa-solid fa-download"></i> Descargar PDF</button>
+                    <button class="form-submit" id="modal-close-btn" style="flex:1;">Cerrar</button>
+                </div>
             </div>
         </div>
 
@@ -1911,6 +1914,14 @@
             // Modal PDF
             document.getElementById("modal-close-x").addEventListener("click", closePdfModal);
             document.getElementById("modal-close-btn").addEventListener("click", closePdfModal);
+            const modalDl = document.getElementById("modal-download-btn");
+            if (modalDl) {
+                modalDl.addEventListener("click", function() {
+                    if (state.activePdf) {
+                        descargarArchivoEstudiante(state.activePdf.name, state.activePdf.data);
+                    }
+                });
+            }
 
             // Modal Certificado de Regularidad
             const btnCert = document.getElementById("btn-descargar-certificado");
@@ -2646,7 +2657,7 @@
                     pdfLink.setAttribute("role", "button");
                     pdfLink.addEventListener("click", function (e) {
                         e.preventDefault();
-                        openPdfModal(r.pdf);
+                        openPdfModal(r.pdf, r.pdf_data);
                     });
                     const icon = document.createElement("i");
                     icon.className = "fa-solid fa-file-pdf";
@@ -2666,14 +2677,94 @@
             renderReminders();
         }
 
-        /* --- PDF MODAL --- */
-        function openPdfModal(filename) {
-            document.getElementById("pdf-modal-title").textContent = filename;
+        /* --- PDF MODAL & DESCARGA --- */
+        function openPdfModal(filename, dataUrl) {
+            state.activePdf = { name: filename, data: dataUrl };
+            const titleEl = document.getElementById("pdf-modal-title");
+            if (titleEl) titleEl.textContent = filename || "documento.pdf";
+            const modalDesc = document.getElementById("pdf-modal-desc");
+            if (modalDesc) {
+                modalDesc.textContent = `Archivo adjuntado por el docente para el curso ${state.alumno.curso || ''}.`;
+            }
             document.getElementById("pdf-modal").classList.add("active");
         }
 
         function closePdfModal() {
             document.getElementById("pdf-modal").classList.remove("active");
+        }
+
+        function descargarArchivoEstudiante(filename, dataUrl) {
+            const nombreFinal = (filename && filename.toLowerCase().endsWith('.pdf')) ? filename : `${filename || 'Material_Estudio'}.pdf`;
+            if (dataUrl && dataUrl.startsWith('data:')) {
+                const a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = nombreFinal;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                return;
+            }
+            if (dataUrl && (dataUrl.startsWith('http') || dataUrl.startsWith('/'))) {
+                const a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = nombreFinal;
+                a.target = '_blank';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                return;
+            }
+            descargarPDFGeneradoEstudiante({
+                titulo: filename || 'Material de Estudio',
+                curso: state.alumno.curso || '—',
+                materia: 'Institucional',
+                nombreArchivo: nombreFinal
+            });
+        }
+
+        function descargarPDFGeneradoEstudiante({ titulo, curso, materia, nombreArchivo }) {
+            const stream = `BT
+/F1 18 Tf
+50 730 Td
+(EDUCTRACK - MATERIAL DE ESTUDIO INSTITUCIONAL) Tj
+0 -26 Td
+/F1 13 Tf
+(Materia: ${materia}   |   Curso: ${curso}) Tj
+0 -24 Td
+/F2 11 Tf
+(Documento: ${titulo}) Tj
+0 -20 Td
+/F2 10 Tf
+(Estudiante: ${state.alumno.nombreCompleto || 'Estudiante'} - Legajo: ${state.alumno.legajo || '—'}) Tj
+0 -35 Td
+/F1 11 Tf
+(Contenido del material de cursada publicado en EducTrack.) Tj
+0 -30 Td
+/F2 9 Tf
+(Este archivo fue generado institucionalmente desde la plataforma oficial EducTrack.) Tj
+ET`;
+            const streamBytes = new TextEncoder().encode(stream);
+            const streamLen = streamBytes.length;
+            const obj1 = "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n";
+            const obj2 = "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n";
+            const obj3 = "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >> endobj\n";
+            const obj4 = `4 0 obj << /Length ${streamLen} >>\nstream\n${stream}\nendstream\nendobj\n`;
+            const obj5 = "5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >> endobj\n";
+            const obj6 = "6 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n";
+            const header = "%PDF-1.4\n";
+            const body = obj1 + obj2 + obj3 + obj4 + obj5 + obj6;
+            const fullText = header + body;
+            const offset = new TextEncoder().encode(fullText).length;
+            const xref = `xref\n0 7\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000244 00000 n \n0000000300 00000 n \n0000000375 00000 n \ntrailer << /Size 7 /Root 1 0 R >>\nstartxref\n${offset}\n%%EOF`;
+            const blob = new Blob([fullText + xref], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nombreArchivo;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
         }
 
         /* --- ASISTENCIA --- */
@@ -2702,13 +2793,13 @@
             container.innerHTML = "";
 
             if (!state.files || state.files.length === 0) {
-                container.innerHTML = '<div style="padding: 25px 15px; text-align: center; color: #64748b; font-size: 13px;">No hay archivos compartidos por tus docentes.</div>';
+                container.innerHTML = '<div style="padding: 25px 15px; text-align: center; color: #64748b; font-size: 13px;">No hay archivos compartidos por tus docentes todavía.</div>';
                 return;
             }
             state.files.forEach(function (f) {
                 const item = document.createElement("div");
                 item.className = "file-item";
-                item.addEventListener("click", function () { openPdfModal(f.name); });
+                item.addEventListener("click", function () { openPdfModal(f.name, f.data); });
 
                 const left = document.createElement("div");
                 left.className = "file-left";
@@ -2725,7 +2816,7 @@
                 details.appendChild(h5);
 
                 const span = document.createElement("span");
-                span.textContent = f.size + " \u2022 " + f.date;
+                span.textContent = (f.materia ? f.materia + " • " : "") + (f.size || 'PDF') + " • " + f.date;
                 details.appendChild(span);
 
                 left.appendChild(details);
@@ -2734,9 +2825,14 @@
                 const dlBtn = document.createElement("button");
                 dlBtn.className = "download-btn";
                 dlBtn.setAttribute("aria-label", "Descargar " + f.name);
+                dlBtn.title = "Descargar " + f.name;
                 const dlIcon = document.createElement("i");
                 dlIcon.className = "fa-solid fa-download";
                 dlBtn.appendChild(dlIcon);
+                dlBtn.onclick = function(e) {
+                    e.stopPropagation();
+                    descargarArchivoEstudiante(f.name, f.data);
+                };
                 item.appendChild(dlBtn);
 
                 container.appendChild(item);

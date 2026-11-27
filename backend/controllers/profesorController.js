@@ -390,6 +390,7 @@ const getRecordatoriosProfesor = async (req, res) => {
 
         const [recordatorios] = await mysqlPool.query(
             `SELECT r.id_recordatorio, r.titulo, r.contenido AS resumen, r.fecha_limite AS fecha, r.estado,
+                    r.archivo, r.archivo_data,
                     c.id_curso, CONCAT(c.año, c.division) AS curso_nombre, c.nombre AS curso_nombre_completo,
                     m.id_materia, m.nombre AS materia_nombre
              FROM recordatorio r
@@ -413,7 +414,8 @@ const getRecordatoriosProfesor = async (req, res) => {
                 curso: r.curso_nombre,
                 curso_completo: r.curso_nombre_completo,
                 materia: r.materia_nombre,
-                archivo: null
+                archivo: r.archivo || null,
+                archivo_data: r.archivo_data || null
             }))
         });
     } catch (error) {
@@ -427,12 +429,12 @@ const getRecordatoriosProfesor = async (req, res) => {
 };
 
 /**
- * Crear un recordatorio o aviso para uno o todos los cursos del docente
+ * Crear un recordatorio o aviso para uno o todos los cursos del docente (con soporte de archivo adjunto / PDF)
  */
 const crearRecordatorioProfesor = async (req, res) => {
     try {
         const id_profesor = req.usuario.id;
-        const { id_curso, titulo, contenido, fecha_limite, todos_los_cursos, archivo } = req.body;
+        const { id_curso, titulo, contenido, fecha_limite, todos_los_cursos, archivo, archivo_data } = req.body;
 
         if (!titulo || !fecha_limite) {
             return res.status(400).json({ ok: false, mensaje: 'Título y fecha son requeridos' });
@@ -458,8 +460,7 @@ const crearRecordatorioProfesor = async (req, res) => {
 
         const fechaFinal = fecha_limite.includes(' ') ? fecha_limite : `${fecha_limite} 23:59:59`;
 
-        // Para evitar duplicar el aviso 3 veces si el docente tiene 3 materias en el mismo curso cuando se selecciona "todos",
-        // agrupamos por curso único
+        // Agrupamos por curso único para no duplicar en caso de múltiples materias por curso
         const asignacionesAInsertar = [];
         const cursosProcesados = new Set();
         for (const a of asigs) {
@@ -471,15 +472,28 @@ const crearRecordatorioProfesor = async (req, res) => {
 
         for (const id_asig of asignacionesAInsertar) {
             await mysqlPool.query(
-                `INSERT INTO recordatorio (id_asignacion, titulo, contenido, fecha_limite, estado) 
-                 VALUES (?, ?, ?, ?, 'activo')`,
-                [id_asig, titulo, contenido || '', fechaFinal]
+                `INSERT INTO recordatorio (id_asignacion, titulo, contenido, fecha_limite, estado, archivo, archivo_data) 
+                 VALUES (?, ?, ?, ?, 'activo', ?, ?)`,
+                [id_asig, titulo, contenido || '', fechaFinal, archivo || null, archivo_data || null]
             );
+
+            // Si se adjuntó un archivo o PDF, registrarlo también en la tabla archivo para el apartado de estudiantes
+            if (archivo) {
+                try {
+                    await mysqlPool.query(
+                        `INSERT INTO archivo (id_asignacion, nombre, url_archivo, archivo_data) 
+                         VALUES (?, ?, ?, ?)`,
+                        [id_asig, archivo, `/uploads/${encodeURIComponent(archivo)}`, archivo_data || null]
+                    );
+                } catch(errArch) {
+                    console.warn('[ProfesorController] Error al guardar en tabla archivo:', errArch.message);
+                }
+            }
         }
 
         return res.json({
             ok: true,
-            mensaje: `Recordatorio enviado a ${asignacionesAInsertar.length} curso(s)`
+            mensaje: `Recordatorio y material PDF enviado a ${asignacionesAInsertar.length} curso(s)`
         });
     } catch (error) {
         console.error('[ProfesorController] Error al crear recordatorio:', error);

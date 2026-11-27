@@ -562,6 +562,13 @@
 
       <form id="formTarea" class="modal__form">
         <div class="form-group">
+          <label for="tareaCursoSelect">Curso Destino</label>
+          <select id="tareaCursoSelect" style="width: 100%; padding: 10px 12px; border-radius: 10px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 14px; outline: none; margin-bottom: 6px;">
+            <option value="todos">Todos mis cursos asignados</option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label for="tareaTitulo">Título de la Tarea</label>
           <input type="text" id="tareaTitulo" placeholder="Ej: Trabajo Práctico de Funciones" required>
         </div>
@@ -651,27 +658,78 @@
       }, 2600);
     }
 
-    function cargarTareas() {
+    async function cargarCursosDocente() {
+      const select = document.getElementById('tareaCursoSelect');
+      if (!select) return;
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+      try {
+        const res = await fetch(`${API_BASE}/api/profesor/dashboard`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok && Array.isArray(data.cursos)) {
+            select.innerHTML = '<option value="todos">Todos mis cursos asignados</option>';
+            data.cursos.forEach(c => {
+              const opt = document.createElement('option');
+              opt.value = c.id_curso;
+              opt.textContent = `${c.nombre} (${c.descripcion || 'Curso'})`;
+              select.appendChild(opt);
+            });
+            const activoId = sessionStorage.getItem('cursoActivoId');
+            if (activoId) select.value = activoId;
+          }
+        }
+      } catch (e) {
+        console.warn('[Tareas] Error al cargar cursos:', e);
+      }
+    }
+
+    async function cargarTareas() {
+      const token = localStorage.getItem('token');
+      const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+      if (token) {
+        try {
+          const res = await fetch(`${API_BASE}/api/profesor/recordatorios`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.ok && Array.isArray(data.recordatorios)) {
+              tareas = data.recordatorios.map(r => ({
+                id: r.id,
+                titulo: r.titulo,
+                fecha: r.fecha,
+                desc: r.resumen || '',
+                archivo: r.archivo || (r.estado === 'reunion' ? 'Reunión Virtual' : 'consigna.pdf'),
+                archivoData: r.archivo_data || null,
+                curso: r.curso,
+                materia: r.materia
+              }));
+              guardarTareas();
+              renderTareas();
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('[Tareas] Error al cargar del backend:', e);
+        }
+      }
+
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             tareas = parsed;
-            return;
           }
         }
       } catch (e) {
         console.warn('[Tareas] Error al cargar localStorage:', e);
       }
-
-      // Tareas por defecto
-      tareas = [
-        { id: 1, titulo: "Trabajo Práctico 1: Álgebra", fecha: "2026-11-10", desc: "Resolver ejercicios 1 al 15 de la guía entregada.", archivo: "guia_algebra_4b.pdf" },
-        { id: 2, titulo: "Cuestionario de Historia", fecha: "2026-11-14", desc: "Completar la lectura del capítulo 3 y responder las 5 preguntas.", archivo: "lectura_revolucion.pdf" },
-        { id: 3, titulo: "Informe de Laboratorio de Ciencias", fecha: "2026-11-20", desc: "Entrega del informe grupal con los resultados experimentales.", archivo: "guia_laboratorio.pdf" }
-      ];
-      guardarTareas();
+      renderTareas();
     }
 
     function guardarTareas() {
@@ -892,13 +950,48 @@ ${offset}
     document.getElementById('btnCerrarDetalle').onclick = () => modalDetalle.classList.remove('is-open');
     document.getElementById('modalDetalleOverlay').onclick = () => modalDetalle.classList.remove('is-open');
 
-    document.getElementById('formTarea').onsubmit = (e) => {
+    document.getElementById('formTarea').onsubmit = async (e) => {
       e.preventDefault();
       const titulo = document.getElementById('tareaTitulo').value.trim();
       const fecha = document.getElementById('tareaFecha').value;
       const desc = document.getElementById('tareaDesc').value.trim();
+      const selectCurso = document.getElementById('tareaCursoSelect');
+      const cursoVal = selectCurso ? selectCurso.value : 'todos';
       const archivoInput = document.getElementById('tareaArchivos');
       const archivo = archivoInput.files.length > 0 ? archivoInput.files[0].name : 'consigna.pdf';
+
+      const token = localStorage.getItem('token');
+      const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+
+      if (token) {
+        try {
+          const res = await fetch(`${API_BASE}/api/profesor/recordatorios`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              id_curso: cursoVal === 'todos' ? null : cursoVal,
+              todos_los_cursos: cursoVal === 'todos',
+              titulo,
+              contenido: desc,
+              fecha_limite: fecha,
+              archivo,
+              archivo_data: archivoSubidoData
+            })
+          });
+          const data = await res.json();
+          if (data.ok) {
+            mostrarToast('¡Tarea y archivo PDF publicados en TiDB Cloud!');
+            modalTarea.classList.remove('is-open');
+            await cargarTareas();
+            return;
+          }
+        } catch (err) {
+          console.warn('[Tareas] Error al guardar en backend:', err);
+        }
+      }
 
       tareas.unshift({
         id: Date.now(),
@@ -912,11 +1005,23 @@ ${offset}
       guardarTareas();
       modalTarea.classList.remove('is-open');
       renderTareas();
-      mostrarToast('¡Tarea y archivo PDF publicados correctamente!');
+      mostrarToast('¡Tarea guardada localmente!');
     };
 
-    document.getElementById('btnEliminarTarea').onclick = () => {
+    document.getElementById('btnEliminarTarea').onclick = async () => {
       if (confirm('¿Desea eliminar esta tarea?')) {
+        const token = localStorage.getItem('token');
+        const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+        if (token && tareaSeleccionadaId) {
+          try {
+            await fetch(`${API_BASE}/api/profesor/recordatorios/${tareaSeleccionadaId}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+          } catch(e) {
+            console.warn('Error al eliminar en backend:', e);
+          }
+        }
         tareas = tareas.filter(t => t.id !== tareaSeleccionadaId);
         guardarTareas();
         modalDetalle.classList.remove('is-open');
@@ -933,8 +1038,10 @@ ${offset}
     const labelCurso = document.getElementById('labelCursoTareas');
     if (labelCurso) labelCurso.textContent = `${curso} • ${materia}`;
 
-    cargarTareas();
-    renderTareas();
+    (async () => {
+      await cargarCursosDocente();
+      await cargarTareas();
+    })();
   </script>
 </body>
 </html>
