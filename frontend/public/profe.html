@@ -617,11 +617,11 @@
 
         <section class="metrics" aria-label="Resumen de Métricas">
           <div class="metric">
-            <strong id="metricReunion">9/7</strong>
+            <strong id="metricReunion">—</strong>
             <span>Reunión clase</span>
           </div>
           <div class="metric">
-            <strong id="metricAlumnos">28</strong>
+            <strong id="metricAlumnos">0</strong>
             <span>Alumnos a cargo</span>
           </div>
         </section>
@@ -662,14 +662,7 @@
       </div>
       <div class="modal-body">
         <div class="curso-grid" id="cursoGridContainer">
-          <button class="curso-btn" onclick="elegirCurso('1A')"><strong>1A</strong><span>Primero A</span></button>
-          <button class="curso-btn" onclick="elegirCurso('1B')"><strong>1B</strong><span>Primero B</span></button>
-          <button class="curso-btn" onclick="elegirCurso('2A')"><strong>2A</strong><span>Segundo A</span></button>
-          <button class="curso-btn" onclick="elegirCurso('2B')"><strong>2B</strong><span>Segundo B</span></button>
-          <button class="curso-btn" onclick="elegirCurso('3A')"><strong>3A</strong><span>Tercero A</span></button>
-          <button class="curso-btn" onclick="elegirCurso('3B')"><strong>3B</strong><span>Tercero B</span></button>
-          <button class="curso-btn" onclick="elegirCurso('4A')"><strong>4A</strong><span>Cuarto A</span></button>
-          <button class="curso-btn" onclick="elegirCurso('4B')"><strong>4B</strong><span>Cuarto B</span></button>
+          <p style="text-align:center; color:#9ca3af; grid-column:1/-1; padding:20px; font-size:13px;">Cargando tus cursos asignados...</p>
         </div>
       </div>
     </div>
@@ -680,18 +673,12 @@
     <div class="modal-card">
       <div class="modal-header" style="position:relative;">
         <button type="button" class="modal-close-btn" onclick="cerrarTodosLosModales()" aria-label="Cerrar modal">&times;</button>
-        <h2 id="modalMateriaTitle">Curso: <span id="cursoLabel">4B</span></h2>
+        <h2 id="modalMateriaTitle">Curso: <span id="cursoLabel">—</span></h2>
         <p>Seleccione la materia</p>
       </div>
       <div class="modal-body">
         <div id="materiaBodyContainer">
-          <button class="materia-btn" onclick="elegirMateria('Matemáticas')"><i class="fa-solid fa-calculator" style="margin-right:8px"></i> Matemáticas</button>
-          <button class="materia-btn" onclick="elegirMateria('Base de datos')"><i class="fa-solid fa-database" style="margin-right:8px"></i> Base de datos</button>
-          <button class="materia-btn" onclick="elegirMateria('Historia')"><i class="fa-solid fa-landmark" style="margin-right:8px"></i> Historia</button>
-          <button class="materia-btn" onclick="elegirMateria('Lenguaje')"><i class="fa-solid fa-book-open" style="margin-right:8px"></i> Lenguaje</button>
-          <button class="materia-btn" onclick="elegirMateria('Ciencias')"><i class="fa-solid fa-flask" style="margin-right:8px"></i> Ciencias</button>
-          <button class="materia-btn" onclick="elegirMateria('Inglés')"><i class="fa-solid fa-globe" style="margin-right:8px"></i> Inglés</button>
-          <button class="materia-btn" onclick="elegirMateria('Educación Física')"><i class="fa-solid fa-volleyball" style="margin-right:8px"></i> Educación Física</button>
+          <p style="text-align:center; color:#9ca3af; padding:20px; font-size:13px;">Seleccione un curso primero.</p>
         </div>
         <button type="button" class="modal-back" onclick="volverACurso()">← Volver a selección de curso</button>
       </div>
@@ -767,10 +754,10 @@
               document.getElementById('profesorNombre').textContent = data.profesor.nombreCompleto;
             }
             if (data.metricas) {
-              document.getElementById('metricAlumnos').textContent = data.metricas.totalAlumnos || '28';
-              document.getElementById('metricReunion').textContent = data.metricas.proximaReunion || '9/7';
+              document.getElementById('metricAlumnos').textContent = data.metricas.totalAlumnos !== undefined ? data.metricas.totalAlumnos : '0';
+              document.getElementById('metricReunion').textContent = data.metricas.proximaReunion || '—';
             }
-            if (data.cursos && data.cursos.length > 0) {
+            if (data.cursos) {
               cursosData = data.cursos;
               renderizarCursosEnModal(cursosData);
             }
@@ -788,6 +775,17 @@
       if (!grid) return;
 
       grid.innerHTML = '';
+      if (!cursos || cursos.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 25px 15px; color: #9ca3af;">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 24px; color: #f59e0b; margin-bottom: 8px;"></i>
+            <p style="font-size: 14px; font-weight: 600; color: #e5e7eb; margin-bottom: 4px;">Aún no tienes cursos asignados</p>
+            <p style="font-size: 12px; color: #9ca3af;">El administrador debe asignarte un curso y materia desde su panel.</p>
+          </div>
+        `;
+        return;
+      }
+
       cursos.forEach(c => {
         const btn = document.createElement('button');
         btn.className = 'curso-btn';
@@ -802,14 +800,19 @@
       if (!container) return;
 
       const cursoObj = cursosData.find(c => c.nombre === nombreCurso);
-      const materias = cursoObj && cursoObj.materias && cursoObj.materias.length > 0
-        ? cursoObj.materias
-        : [
-            { nombre: 'Matemáticas' }, { nombre: 'Base de datos' }, { nombre: 'Historia' },
-            { nombre: 'Lenguaje' }, { nombre: 'Ciencias' }, { nombre: 'Inglés' }, { nombre: 'Educación Física' }
-          ];
+      const materias = cursoObj && cursoObj.materias ? cursoObj.materias : [];
 
       container.innerHTML = '';
+      if (materias.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 25px 15px; color: #9ca3af;">
+            <p style="font-size: 13px; color: #e5e7eb; margin-bottom: 4px;">No tienes materias asignadas en este curso</p>
+            <p style="font-size: 11px; color: #9ca3af;">El administrador debe asignarte la materia en el curso.</p>
+          </div>
+        `;
+        return;
+      }
+
       materias.forEach(m => {
         const btn = document.createElement('button');
         btn.className = 'materia-btn';

@@ -1,10 +1,9 @@
-const { query: pgQuery, isPgAvailable } = require('../config/pgDb');
 const mysqlPool = require('../config/db');
 
 /**
  * Obtener todos los datos del dashboard del profesor
  * (Perfil, Cursos asignados, Materias, Métricas de alumnos y Asistencias)
- * Prioriza el motor MySQL activo y seguro con soporte transparente para PostgreSQL.
+ * Conectado 100% a TiDB Cloud con datos reales (sin datos ficticios).
  */
 const getDashboard = async (req, res) => {
     try {
@@ -13,107 +12,18 @@ const getDashboard = async (req, res) => {
         let profesorData = null;
         let cursosMaterias = [];
         let totalAlumnos = 0;
-        let porcentajeAsistencia = 92;
+        let asistenciaPromedio = null;
         let pendientes = [];
 
-        // 1. Consultar en MySQL (Motor principal y activo del sistema)
-        try {
-            const [profesores] = await mysqlPool.query(
-                'SELECT * FROM profesor WHERE id_profesor = ?',
-                [id_profesor]
-            );
+        // 1. Consultar profesor en MySQL / TiDB
+        const [profesores] = await mysqlPool.query(
+            'SELECT id_profesor, usuario, nombre, apellido, email, avatar_url FROM profesor WHERE id_profesor = ?',
+            [id_profesor]
+        );
 
-            if (profesores.length > 0) {
-                profesorData = profesores[0];
-            } else {
-                profesorData = {
-                    id_profesor: id_profesor,
-                    nombre: req.usuario.nombre || 'Carlos',
-                    apellido: 'Gómez',
-                    usuario: 'profesor'
-                };
-            }
-
-            // Consultar asignaciones en MySQL
-            const [asignaciones] = await mysqlPool.query(
-                `SELECT 
-                    c.id_curso,
-                    CONCAT(c.año, c.division) AS curso_nombre,
-                    m.id_materia,
-                    m.nombre AS materia_nombre
-                 FROM asignacion a
-                 JOIN curso c ON a.id_curso = c.id_curso
-                 JOIN materia m ON a.id_materia = m.id_materia
-                 WHERE a.id_profesor = ?`,
-                [id_profesor]
-            );
-            cursosMaterias = asignaciones;
-
-            // Total de alumnos a cargo
-            const [alumnosCount] = await mysqlPool.query(
-                'SELECT COUNT(*) AS total FROM alumno WHERE id_curso = 1'
-            );
-            totalAlumnos = alumnosCount[0]?.total !== undefined ? alumnosCount[0].total : 0;
-
-            // Recordatorios pendientes
-            const [recRows] = await mysqlPool.query(
-                `SELECT id_recordatorio AS id_pendiente, titulo, 'recordatorio' AS tipo, fecha_limite AS fecha_entrega 
-                 FROM recordatorio 
-                 WHERE estado = 'pendiente' 
-                 ORDER BY fecha_limite ASC LIMIT 3`
-            );
-            pendientes = recRows;
-
-        } catch (myErr) {
-            console.warn('[ProfesorController] Error consultando MySQL, intentando PostgreSQL:', myErr.message);
-        }
-
-        // 2. Si no se obtuvieron datos en MySQL y PostgreSQL está disponible
-        if (!profesorData && isPgAvailable && isPgAvailable()) {
-            try {
-                const profResult = await pgQuery(
-                    `SELECT id_profesor, nombre, apellido, usuario, email, avatar_url 
-                     FROM profesor 
-                     WHERE id_profesor = $1`,
-                    [id_profesor]
-                );
-
-                if (profResult.rows.length > 0) {
-                    profesorData = profResult.rows[0];
-
-                    const cmResult = await pgQuery(
-                        `SELECT DISTINCT
-                            c.id_curso,
-                            c.nombre AS curso_nombre,
-                            c.nivel,
-                            m.id_materia,
-                            m.nombre AS materia_nombre,
-                            m.color AS materia_color
-                         FROM docente_curso_materia dcm
-                         JOIN curso c ON dcm.id_curso = c.id_curso
-                         JOIN materia m ON dcm.id_materia = m.id_materia
-                         WHERE dcm.id_profesor = $1
-                         ORDER BY c.nombre ASC, m.nombre ASC`,
-                        [id_profesor]
-                    );
-                    cursosMaterias = cmResult.rows;
-
-                    const alResult = await pgQuery(
-                        `SELECT COUNT(DISTINCT a.id_alumno) AS total_alumnos
-                         FROM alumno a
-                         JOIN docente_curso_materia dcm ON a.id_curso = dcm.id_curso
-                         WHERE dcm.id_profesor = $1`,
-                        [id_profesor]
-                    );
-                    totalAlumnos = parseInt(alResult.rows[0]?.total_alumnos || '0', 10);
-                }
-            } catch (pgError) {
-                console.warn('[ProfesorController] Error consultando PostgreSQL:', pgError.message);
-            }
-        }
-
-        // Si aún no hay profesorData, establecer valor por defecto seguro
-        if (!profesorData) {
+        if (profesores.length > 0) {
+            profesorData = profesores[0];
+        } else {
             profesorData = {
                 id_profesor: id_profesor,
                 nombre: req.usuario.nombre || 'Profesor',
@@ -122,7 +32,25 @@ const getDashboard = async (req, res) => {
             };
         }
 
-        // Cursos únicos agrupados para la selección del modal
+        // 2. Consultar asignaciones reales del profesor en TiDB
+        const [asignaciones] = await mysqlPool.query(
+            `SELECT 
+                c.id_curso,
+                c.nombre AS curso_nombre_completo,
+                CONCAT(c.año, c.division) AS curso_nombre,
+                m.id_materia,
+                m.nombre AS materia_nombre,
+                m.color AS materia_color
+             FROM asignacion a
+             JOIN curso c ON a.id_curso = c.id_curso
+             JOIN materia m ON a.id_materia = m.id_materia
+             WHERE a.id_profesor = ?
+             ORDER BY c.año ASC, c.division ASC, m.nombre ASC`,
+            [id_profesor]
+        );
+        cursosMaterias = asignaciones;
+
+        // Cursos y materias únicos agrupados para la selección del profesor
         const cursosMap = {};
         cursosMaterias.forEach(cm => {
             const key = cm.curso_nombre || '4B';
@@ -130,7 +58,7 @@ const getDashboard = async (req, res) => {
                 cursosMap[key] = {
                     id_curso: cm.id_curso,
                     nombre: key,
-                    descripcion: `Curso ${key}`,
+                    descripcion: cm.curso_nombre_completo || `Curso ${key}`,
                     materias: []
                 };
             }
@@ -143,64 +71,70 @@ const getDashboard = async (req, res) => {
             }
         });
 
-        // Asegurar que 4B tenga las materias asignadas incluyendo Base de datos
-        if (cursosMap['4B']) {
-            const materias4B = [
-                { id_materia: 1, nombre: 'Matemáticas' },
-                { id_materia: 2, nombre: 'Historia' },
-                { id_materia: 3, nombre: 'Base de datos' },
-                { id_materia: 4, nombre: 'Lenguaje' },
-                { id_materia: 5, nombre: 'Ciencias' },
-                { id_materia: 6, nombre: 'Inglés' },
-                { id_materia: 7, nombre: 'Educación Física' }
-            ];
-            materias4B.forEach(m => {
-                if (!cursosMap['4B'].materias.some(existing => existing.nombre.toLowerCase() === m.nombre.toLowerCase())) {
-                    cursosMap['4B'].materias.push(m);
-                }
-            });
-        }
+        const cursosIds = Object.values(cursosMap).map(c => c.id_curso).filter(Boolean);
 
-        // Asegurar cursos por defecto del modal
-        const defaultCursos = ['1A', '1B', '2A', '2B', '3A', '3B', '4A', '4B'];
-        defaultCursos.forEach(c => {
-            if (!cursosMap[c]) {
-                cursosMap[c] = {
-                    id_curso: null,
-                    nombre: c,
-                    descripcion: `Curso ${c}`,
-                    materias: [
-                        { id_materia: 1, nombre: 'Matemáticas' },
-                        { id_materia: 2, nombre: 'Historia' },
-                        { id_materia: 3, nombre: 'Base de datos' },
-                        { id_materia: 4, nombre: 'Lenguaje' },
-                        { id_materia: 5, nombre: 'Ciencias' },
-                        { id_materia: 6, nombre: 'Inglés' },
-                        { id_materia: 7, nombre: 'Educación Física' }
-                    ]
-                };
+        // 3. Métricas reales calculadas desde TiDB Cloud
+        if (cursosIds.length > 0) {
+            // Conteo real de alumnos en los cursos asignados a este profesor
+            const [alCount] = await mysqlPool.query(
+                `SELECT COUNT(DISTINCT id_alumno) AS total FROM alumno WHERE id_curso IN (?)`,
+                [cursosIds]
+            );
+            totalAlumnos = alCount[0]?.total || 0;
+
+            // Asistencia real calculada
+            const [asistData] = await mysqlPool.query(
+                `SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN UPPER(estado) IN ('P', 'PRESENTE', 'J') THEN 1 ELSE 0 END) as presentes
+                 FROM asistencia 
+                 WHERE id_alumno IN (SELECT id_alumno FROM alumno WHERE id_curso IN (?))`,
+                [cursosIds]
+            );
+            if (asistData[0]?.total > 0) {
+                const pct = Math.round((asistData[0].presentes / asistData[0].total) * 100);
+                asistenciaPromedio = `${pct}%`;
             }
-        });
+
+            // Recordatorios reales de las asignaciones de este docente
+            const [recRows] = await mysqlPool.query(
+                `SELECT r.id_recordatorio AS id_pendiente, r.titulo, 'recordatorio' AS tipo, r.fecha_limite AS fecha_entrega 
+                 FROM recordatorio r
+                 JOIN asignacion a ON r.id_asignacion = a.id_asignacion
+                 WHERE a.id_profesor = ?
+                 ORDER BY r.fecha_limite ASC LIMIT 5`,
+                [id_profesor]
+            );
+            pendientes = recRows;
+        }
 
         const nombreCompleto = `${profesorData.nombre || ''} ${profesorData.apellido || ''}`.trim() || profesorData.usuario;
 
+        // Próximo evento real (o null si no hay pendientes creados)
+        let proximaReunion = null;
+        if (pendientes.length > 0 && pendientes[0].fecha_entrega) {
+            const f = new Date(pendientes[0].fecha_entrega);
+            if (!isNaN(f.getTime())) {
+                proximaReunion = `${f.getDate()}/${f.getMonth() + 1}`;
+            }
+        }
+
         return res.json({
             ok: true,
-            motor: 'MySQL',
+            motor: 'TiDB Cloud',
             profesor: {
                 id: profesorData.id_profesor,
                 nombre: profesorData.nombre,
                 apellido: profesorData.apellido,
                 nombreCompleto: nombreCompleto,
                 usuario: profesorData.usuario,
-                email: profesorData.email || 'profesor@eductrack.edu',
+                email: profesorData.email || `${profesorData.usuario}@eductrack.edu`,
                 avatar_url: profesorData.avatar_url || null
             },
             metricas: {
-                totalAlumnos: totalAlumnos || 8,
-                proximaReunion: '9/7 - 14:00',
-                asistenciaPromedio: `${porcentajeAsistencia}%`,
-                proximaBaja: 'X días'
+                totalAlumnos: totalAlumnos,
+                proximaReunion: proximaReunion || '—',
+                asistenciaPromedio: asistenciaPromedio || 'Sin registros'
             },
             cursos: Object.values(cursosMap),
             pendientes
@@ -217,45 +151,23 @@ const getDashboard = async (req, res) => {
 };
 
 /**
- * Consultar alumnos de un curso específico de forma segura
+ * Consultar alumnos de un curso específico de forma segura desde TiDB Cloud
  */
 const getAlumnosPorCurso = async (req, res) => {
     try {
         const { id_curso } = req.params;
 
-        // 1. Consultar directamente en MySQL
-        let alumnos = [];
-        try {
-            const [myResult] = await mysqlPool.query(
-                `SELECT id_alumno, nombre, apellido, usuario, id_curso 
-                 FROM alumno 
-                 WHERE id_curso = ? 
-                 ORDER BY apellido ASC, nombre ASC`,
-                [id_curso]
-            );
-            alumnos = myResult;
-        } catch (myErr) {
-            console.warn('[ProfesorController] Error al consultar alumnos en MySQL:', myErr.message);
-        }
-
-        // 2. Si no hubo resultados en MySQL y PostgreSQL está disponible
-        if (alumnos.length === 0 && isPgAvailable && isPgAvailable()) {
-            try {
-                const pgResult = await pgQuery(
-                    `SELECT a.id_alumno, a.nombre, a.apellido, a.usuario, a.email, c.nombre AS curso
-                     FROM alumno a
-                     JOIN curso c ON a.id_curso = c.id_curso
-                     WHERE a.id_curso = $1
-                     ORDER BY a.apellido ASC, a.nombre ASC`,
-                    [id_curso]
-                );
-                alumnos = pgResult.rows;
-            } catch {}
-        }
+        const [alumnos] = await mysqlPool.query(
+            `SELECT id_alumno, nombre, apellido, usuario, id_curso 
+             FROM alumno 
+             WHERE id_curso = ? 
+             ORDER BY apellido ASC, nombre ASC`,
+            [id_curso]
+        );
 
         return res.json({
             ok: true,
-            motor: 'MySQL',
+            motor: 'TiDB Cloud',
             id_curso,
             total: alumnos.length,
             alumnos

@@ -652,6 +652,47 @@
         </div>
     </div>
 
+    <!-- Modal Añadir Materia y Asignar Profesor -->
+    <div id="modal-materia"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
+        <div class="bg-[#2a0a0a] border border-red-900/30 p-6 rounded-2xl w-full max-w-md mx-4 shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="book-plus" class="w-5 h-5 text-red-400"></i> Asignar Materia a Curso
+                </h3>
+                <button onclick="closeModal('modal-materia')" class="text-gray-400 hover:text-white">&times;</button>
+            </div>
+            <p class="text-xs text-gray-400 mb-4">
+                Curso seleccionado: <strong id="modal-materia-curso-nombre" class="text-red-400"></strong>
+            </p>
+            <div class="mb-3">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Materia</label>
+                <select id="select-materia" onchange="toggleNuevaMateriaInput()"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500 text-sm">
+                </select>
+            </div>
+            <div id="campo-nueva-materia" class="mb-3 hidden">
+                <label class="block text-xs text-amber-400 uppercase font-bold mb-1">Nombre de la nueva materia</label>
+                <input type="text" id="input-nueva-materia" placeholder="Ej: Robótica, Filosofía, etc."
+                    class="w-full bg-[#1a0505] border border-amber-600/50 text-white rounded-lg px-3 py-2 outline-none focus:border-amber-500 text-sm">
+            </div>
+            <div class="mb-4">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Docente Asignado</label>
+                <select id="select-docente-materia"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500 text-sm">
+                </select>
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="closeModal('modal-materia')"
+                    class="px-4 py-2 text-gray-400 hover:text-white text-sm">Cancelar</button>
+                <button onclick="guardarMateriaAsignacion()"
+                    class="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-lg text-sm font-bold shadow-lg shadow-red-900/40">
+                    Guardar Asignación
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal OCR (Carga por Foto) -->
     <div id="modal-ocr"
         class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
@@ -896,21 +937,152 @@
             lucide.createIcons();
         }
 
-        function renderMateriasCurso() {
-            const tbody = document.getElementById('materias-curso-tbody');
-            if (!tbody || !selectedCurso) return;
-            const asigs = (db.asignaciones || []).filter(a => a.cursoId === selectedCurso.id);
-            if (asigs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500 italic border-b border-red-900/10">No hay materias asignadas.</td></tr>`;
+        async function abrirModalNuevaMateria() {
+            if (!selectedCurso) {
+                showToast('Primero seleccioná un curso en la lista', 'error');
                 return;
             }
-            tbody.innerHTML = asigs.map(a => `
-                <tr class="hover:bg-red-900/10">
-                    <td class="p-3 font-bold text-white">${a.materia}</td>
-                    <td class="p-3 text-gray-300 text-xs">${a.profeId || '—'}</td>
-                    <td class="p-3 text-right"></td>
-                </tr>
-            `).join('');
+            document.getElementById('modal-materia-curso-nombre').textContent = selectedCurso.name;
+
+            // Cargar materias disponibles
+            try {
+                const r = await fetch(`${API}/materias`, { headers: headers() });
+                const d = await r.json();
+                db.materias = d.materias || [];
+            } catch(e) {
+                db.materias = [];
+            }
+
+            const selMat = document.getElementById('select-materia');
+            selMat.innerHTML = `
+                <option value="">-- Seleccionar materia institucional --</option>
+                ${db.materias.map(m => `<option value="${m.id_materia}">${m.nombre}</option>`).join('')}
+                <option value="__NUEVA__">➕ Escribir nombre de otra materia...</option>
+            `;
+            document.getElementById('campo-nueva-materia').classList.add('hidden');
+            document.getElementById('input-nueva-materia').value = '';
+
+            // Cargar docentes disponibles
+            const selProf = document.getElementById('select-docente-materia');
+            if (db.profesores && db.profesores.length > 0) {
+                selProf.innerHTML = db.profesores.map(p => 
+                    `<option value="${p.id_profesor}">${p.nombre} ${p.apellido} (@${p.usuario})</option>`
+                ).join('');
+            } else {
+                selProf.innerHTML = '<option value="">⚠️ No hay docentes cargados aún. Creá uno en Cuerpo Docente primero.</option>';
+            }
+
+            openModal('modal-materia');
+        }
+
+        function toggleNuevaMateriaInput() {
+            const sel = document.getElementById('select-materia').value;
+            const campo = document.getElementById('campo-nueva-materia');
+            if (sel === '__NUEVA__') {
+                campo.classList.remove('hidden');
+                document.getElementById('input-nueva-materia').focus();
+            } else {
+                campo.classList.add('hidden');
+            }
+        }
+
+        async function guardarMateriaAsignacion() {
+            if (!selectedCurso) return;
+            const selMat = document.getElementById('select-materia').value;
+            const nuevaMat = document.getElementById('input-nueva-materia').value.trim();
+            const idProf = document.getElementById('select-docente-materia').value;
+
+            if (!idProf) {
+                showToast('Debes seleccionar un docente para esta materia', 'error');
+                return;
+            }
+
+            let bodyPayload = {
+                id_curso: parseInt(selectedCurso.id),
+                id_profesor: parseInt(idProf)
+            };
+
+            if (selMat === '__NUEVA__') {
+                if (!nuevaMat) {
+                    showToast('Ingresá el nombre de la nueva materia', 'error');
+                    return;
+                }
+                bodyPayload.nombre_materia = nuevaMat;
+            } else if (selMat) {
+                bodyPayload.id_materia = parseInt(selMat);
+            } else {
+                showToast('Seleccioná o creá una materia', 'error');
+                return;
+            }
+
+            try {
+                const r = await fetch(`${API}/asignaciones`, {
+                    method: 'POST',
+                    headers: headers(),
+                    body: JSON.stringify(bodyPayload)
+                });
+                const data = await r.json();
+                if (data.ok) {
+                    showToast('✅ ' + data.mensaje);
+                    closeModal('modal-materia');
+                    await renderMateriasCurso();
+                } else {
+                    showToast(data.mensaje || 'Error al asignar', 'error');
+                }
+            } catch(e) {
+                showToast('Error de conexión', 'error');
+            }
+        }
+
+        async function renderMateriasCurso() {
+            const tbody = document.getElementById('materias-curso-tbody');
+            if (!tbody || !selectedCurso) return;
+            tbody.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-500">Cargando materias...</td></tr>`;
+
+            try {
+                const r = await fetch(`${API}/asignaciones?id_curso=${selectedCurso.id}`, { headers: headers() });
+                const d = await r.json();
+                const asignaciones = d.asignaciones || [];
+
+                if (asignaciones.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500 italic border-b border-red-900/10">No hay materias asignadas en este curso todavía. Hacé clic en "Añadir Materia" arriba.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = asignaciones.map(a => `
+                    <tr class="hover:bg-red-900/10">
+                        <td class="p-3 font-bold text-white whitespace-nowrap flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full" style="background:${a.materia_color || '#b01c1c'}"></span>
+                            ${a.materia}
+                        </td>
+                        <td class="p-3 text-gray-300 text-xs whitespace-nowrap">
+                            ${a.profesor ? `<strong class="text-white">${a.profesor}</strong> <span class="text-red-300 font-mono text-[11px]">(@${a.profe_usuario})</span>` : '<span class="italic text-gray-500">Sin docente</span>'}
+                        </td>
+                        <td class="p-3 text-right whitespace-nowrap">
+                            <button onclick="eliminarAsignacion(${a.id_asignacion})" class="text-red-400 hover:text-red-300 p-1 transition-colors" title="Quitar materia"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+                lucide.createIcons();
+            } catch(e) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-red-400 text-xs">Error al consultar materias de este curso.</td></tr>`;
+            }
+        }
+
+        async function eliminarAsignacion(id) {
+            if (!confirm('¿Quitar esta materia del curso?')) return;
+            try {
+                const r = await fetch(`${API}/asignaciones/${id}`, { method: 'DELETE', headers: headers() });
+                const d = await r.json();
+                if (d.ok) {
+                    showToast('Materia quitada del curso');
+                    await renderMateriasCurso();
+                } else {
+                    showToast(d.mensaje || 'Error al quitar materia', 'error');
+                }
+            } catch(e) {
+                showToast('Error de conexión', 'error');
+            }
         }
 
         function abrirModalAlumno() {

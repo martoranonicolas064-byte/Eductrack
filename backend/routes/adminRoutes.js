@@ -301,6 +301,153 @@ router.get('/cursos', verificarAdmin, async (req, res) => {
     }
 });
 
+// ─── MATERIAS ─────────────────────────────────────────────────────────────────
+
+// Listar todas las materias
+router.get('/materias', verificarAdmin, async (req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT id_materia, nombre, color FROM materia ORDER BY nombre ASC');
+        res.json({ ok: true, materias: rows });
+    } catch (error) {
+        console.error('Error al listar materias:', error);
+        res.status(500).json({ ok: false, mensaje: 'Error al consultar materias', error: error.message });
+    }
+});
+
+// Crear nueva materia
+router.post('/materias', verificarAdmin, async (req, res) => {
+    try {
+        let { nombre, color } = req.body;
+        if (!nombre || !nombre.trim()) {
+            return res.status(400).json({ ok: false, mensaje: 'El nombre de la materia es obligatorio' });
+        }
+        nombre = nombre.trim();
+        color = color || '#b01c1c';
+
+        const [existe] = await pool.query('SELECT id_materia, nombre FROM materia WHERE LOWER(nombre) = LOWER(?)', [nombre]);
+        if (existe.length > 0) {
+            return res.json({ ok: true, mensaje: 'La materia ya existía', materia: existe[0] });
+        }
+
+        const [result] = await pool.query('INSERT INTO materia (nombre, color) VALUES (?, ?)', [nombre, color]);
+        res.json({
+            ok: true,
+            mensaje: 'Materia creada exitosamente',
+            materia: { id_materia: result.insertId, nombre, color }
+        });
+    } catch (error) {
+        console.error('Error al crear materia:', error);
+        res.status(500).json({ ok: false, mensaje: 'Error al crear materia', error: error.message });
+    }
+});
+
+// ─── ASIGNACIONES (Materias por Curso con Profesor) ──────────────────────────
+
+// Listar asignaciones (opcionalmente filtradas por id_curso)
+router.get('/asignaciones', verificarAdmin, async (req, res) => {
+    try {
+        const { id_curso } = req.query;
+        let sql = `
+            SELECT a.id_asignacion, a.id_curso, a.id_materia, a.id_profesor,
+                   m.nombre AS materia, m.color AS materia_color,
+                   c.nombre AS curso,
+                   CONCAT(p.nombre, ' ', p.apellido) AS profesor,
+                   p.usuario AS profe_usuario
+            FROM asignacion a
+            JOIN materia m ON a.id_materia = m.id_materia
+            JOIN curso c ON a.id_curso = c.id_curso
+            LEFT JOIN profesor p ON a.id_profesor = p.id_profesor
+        `;
+        const params = [];
+        if (id_curso) {
+            sql += ' WHERE a.id_curso = ?';
+            params.push(id_curso);
+        }
+        sql += ' ORDER BY m.nombre ASC';
+
+        const [rows] = await pool.query(sql, params);
+        res.json({ ok: true, asignaciones: rows });
+    } catch (error) {
+        console.error('Error al obtener asignaciones:', error);
+        res.status(500).json({ ok: false, mensaje: 'Error al consultar asignaciones', error: error.message });
+    }
+});
+
+// Crear o actualizar asignación (Materia + Profesor a un Curso)
+router.post('/asignaciones', verificarAdmin, async (req, res) => {
+    try {
+        let { id_curso, id_materia, nombre_materia, id_profesor } = req.body;
+        if (!id_curso) {
+            return res.status(400).json({ ok: false, mensaje: 'Debe especificar el curso' });
+        }
+
+        // Si se envió un nombre de materia, buscar o crear la materia
+        if (!id_materia && nombre_materia && nombre_materia.trim()) {
+            const matNombre = nombre_materia.trim();
+            const [existeMat] = await pool.query('SELECT id_materia FROM materia WHERE LOWER(nombre) = LOWER(?)', [matNombre]);
+            if (existeMat.length > 0) {
+                id_materia = existeMat[0].id_materia;
+            } else {
+                const [crearMat] = await pool.query('INSERT INTO materia (nombre, color) VALUES (?, "#b01c1c")', [matNombre]);
+                id_materia = crearMat.insertId;
+            }
+        }
+
+        if (!id_materia) {
+            return res.status(400).json({ ok: false, mensaje: 'Debe seleccionar o escribir el nombre de la materia' });
+        }
+
+        let idProf = id_profesor ? parseInt(id_profesor) : null;
+        if (!idProf) {
+            const [profs] = await pool.query('SELECT id_profesor FROM profesor LIMIT 1');
+            idProf = profs[0]?.id_profesor || null;
+        }
+
+        if (!idProf) {
+            return res.status(400).json({ ok: false, mensaje: 'Primero debés crear al menos un profesor para asignarle la materia' });
+        }
+
+        // Verificar si la materia ya está asignada en este curso
+        const [yaAsignada] = await pool.query(
+            'SELECT id_asignacion FROM asignacion WHERE id_curso = ? AND id_materia = ?',
+            [id_curso, id_materia]
+        );
+
+        let idAsignacion;
+        if (yaAsignada.length > 0) {
+            idAsignacion = yaAsignada[0].id_asignacion;
+            await pool.query('UPDATE asignacion SET id_profesor = ? WHERE id_asignacion = ?', [idProf, idAsignacion]);
+        } else {
+            const [resInsert] = await pool.query(
+                'INSERT INTO asignacion (id_curso, id_materia, id_profesor) VALUES (?, ?, ?)',
+                [id_curso, id_materia, idProf]
+            );
+            idAsignacion = resInsert.insertId;
+        }
+
+        res.json({
+            ok: true,
+            mensaje: 'Materia y docente asignados correctamente al curso en TiDB Cloud',
+            id_asignacion: idAsignacion
+        });
+    } catch (error) {
+        console.error('Error al crear asignación:', error);
+        res.status(500).json({ ok: false, mensaje: 'Error al asignar materia y docente', error: error.message });
+    }
+});
+
+// Eliminar asignación
+router.delete('/asignaciones/:id', verificarAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query('DELETE FROM asignacion WHERE id_asignacion = ?', [id]);
+        res.json({ ok: true, mensaje: 'Materia desasignada del curso correctamente' });
+    } catch (error) {
+        console.error('Error al eliminar asignación:', error);
+        res.status(500).json({ ok: false, mensaje: 'Error al desasignar materia', error: error.message });
+    }
+});
+
 // ─── RESET COMPLETO DE BASE DE DATOS A ESTADO LIMPIO ──────────────────────────
 router.post('/reset', verificarAdmin, async (req, res) => {
     try {

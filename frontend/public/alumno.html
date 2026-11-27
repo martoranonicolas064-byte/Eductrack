@@ -1468,8 +1468,8 @@
                 <div class="kpi-top-hero">
                     <div class="student-meta-strip">
                         <div>
-                            <span class="student-name" id="display-student-name">Lucas Fernández</span>
-                            <div id="display-student-legajo">Legajo: ALU-2026-8492</div>
+                            <span class="student-name" id="display-student-name">Estudiante</span>
+                            <div id="display-student-legajo">Legajo: —</div>
                         </div>
                         <div style="text-align: right;">
                             <b id="display-student-curso">4° Año B</b> - <span id="display-student-turno">Turno Mañana</span><br>
@@ -1684,11 +1684,11 @@
         // ============================================================================
         const state = {
             alumno: {
-                id: 104,
-                legajo: "ALU-2026-8492",
-                nombre: "Lucas",
-                apellido: "Fernández",
-                curso: "4° Año A",
+                id: null,
+                legajo: "—",
+                nombre: "Estudiante",
+                apellido: "",
+                curso: "—",
                 cohorte: 2026
             },
             currentYear: new Date().getFullYear(),
@@ -1696,213 +1696,44 @@
             months: ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"],
             selectedDay: new Date().getDate(),
             showAllReminders: false,
-            reminders: [
-                { month: 9, day: 1, category: "MATEMATICA", text: "Chicos recuerden entregar el trabajo practico mañana", pdf: null },
-                { month: 9, day: 30, category: "LENGUA Y LITERATURA", text: "estudien este pdf para la prueba", pdf: "material_estudio.pdf" },
-                { month: 9, day: 5, category: "LENGUA Y LITERATURA", text: "Entrega de ejercicio de Lengua", pdf: null },
-                { month: 9, day: 10, category: "MATEMATICA", text: "Revisión de carpetas", pdf: "ejercicios_math.pdf" }
-            ],
-            grades: [
-                { subject: "Matemática", title: "Trabajo Práctico 1", score: 9.0, ponderacion: "20%" },
-                { subject: "Lengua y Literatura", title: "Examen de Sintaxis", score: 8.5, ponderacion: "30%" },
-                { subject: "Historia", title: "Presentación Oral", score: 10.0, ponderacion: "25%" },
-                { subject: "Física", title: "Laboratorio Parcial", score: 7.5, ponderacion: "25%" }
-            ],
+            reminders: [],
+            grades: [],
             selectedPeriod: "c1",
             libreta: {
-                c1: [
-                    {
-                        subject: "Matemática",
-                        profesor: "Prof. Gómez",
-                        icon: "fa-square-root-variable",
-                        evaluaciones: [
-                            { nombre: "Trabajo Práctico 1", fecha: "15 Abr", peso: "20%", nota: 9.0 },
-                            { nombre: "Parcial de Álgebra", fecha: "20 May", peso: "40%", nota: 8.5 },
-                            { nombre: "Evaluación Integradora", fecha: "25 Jun", peso: "40%", nota: 9.5 }
-                        ],
-                        observacion: "Excelente razonamiento lógico y desempeño en resolución de problemas complejos."
-                    },
-                    {
-                        subject: "Lengua y Literatura",
-                        profesor: "Prof. Martínez",
-                        icon: "fa-book-open",
-                        evaluaciones: [
-                            { nombre: "Análisis Literario", fecha: "10 Abr", peso: "25%", nota: 8.0 },
-                            { nombre: "Examen de Sintaxis", fecha: "14 May", peso: "35%", nota: 8.5 },
-                            { nombre: "Producción Escrita", fecha: "18 Jun", peso: "40%", nota: 9.0 }
-                        ],
-                        observacion: "Muy buena redacción, capacidad analítica y correcta interpretación textual."
-                    },
-                    {
-                        subject: "Historia",
-                        profesor: "Prof. Rossi",
-                        icon: "fa-landmark",
-                        evaluaciones: [
-                            { nombre: "Presentación Oral", fecha: "05 May", peso: "30%", nota: 10.0 },
-                            { nombre: "Ensayo Histórico", fecha: "02 Jun", peso: "35%", nota: 9.5 },
-                            { nombre: "Examen Cuatrimestral", fecha: "28 Jun", peso: "35%", nota: 10.0 }
-                        ],
-                        observacion: "Destacada argumentación histórica, participación en debates y rigor conceptual."
-                    },
-                    {
-                        subject: "Física",
-                        profesor: "Prof. Benítez",
-                        icon: "fa-atom",
-                        evaluaciones: [
-                            { nombre: "Laboratorio Parcial", fecha: "22 Abr", peso: "30%", nota: 7.5 },
-                            { nombre: "Cinemática y Dinámica", fecha: "29 May", peso: "35%", nota: 8.0 },
-                            { nombre: "Evaluación Práctica", fecha: "20 Jun", peso: "35%", nota: 8.5 }
-                        ],
-                        observacion: "Buen desenvolvimiento experimental; continuar afianzando deducciones teóricas."
-                    },
-                    {
-                        subject: "Biología",
-                        profesor: "Prof. Herrera",
-                        icon: "fa-dna",
-                        evaluaciones: [
-                            { nombre: "Genética y Celular", fecha: "18 Abr", peso: "30%", nota: 8.5 },
-                            { nombre: "Informe de Laboratorio", fecha: "16 May", peso: "30%", nota: 9.0 },
-                            { nombre: "Examen Unidad 1", fecha: "22 Jun", peso: "40%", nota: 9.0 }
-                        ],
-                        observacion: "Comprensión sólida de procesos biológicos y rigurosidad en informes."
-                    },
-                    {
-                        subject: "Inglés Técnico",
-                        profesor: "Prof. Williams",
-                        icon: "fa-language",
-                        evaluaciones: [
-                            { nombre: "Reading Comprehension", fecha: "12 May", peso: "35%", nota: 9.0 },
-                            { nombre: "Oral Presentation", fecha: "08 Jun", peso: "35%", nota: 9.5 },
-                            { nombre: "Vocabulario Técnico", fecha: "24 Jun", peso: "30%", nota: 9.0 }
-                        ],
-                        observacion: "Fluidez destacada y excelente dominio del léxico técnico aplicado."
-                    },
-                    {
-                        subject: "Geografía",
-                        profesor: "Prof. Díaz",
-                        icon: "fa-earth-americas",
-                        evaluaciones: [
-                            { nombre: "Cartografía y Mapas", fecha: "25 Abr", peso: "30%", nota: 8.0 },
-                            { nombre: "Estudio Regional", fecha: "27 May", peso: "35%", nota: 8.5 },
-                            { nombre: "Evaluación Escrita", fecha: "19 Jun", peso: "35%", nota: 8.5 }
-                        ],
-                        observacion: "Buena interpretación cartográfica y análisis de dinámicas socioespaciales."
-                    },
-                    {
-                        subject: "Informática y Programación",
-                        profesor: "Prof. Silva",
-                        icon: "fa-laptop-code",
-                        evaluaciones: [
-                            { nombre: "Algoritmos y Estructuras", fecha: "04 May", peso: "30%", nota: 10.0 },
-                            { nombre: "Proyecto Web Funcional", fecha: "01 Jun", peso: "40%", nota: 9.5 },
-                            { nombre: "Evaluación Práctica", fecha: "26 Jun", peso: "30%", nota: 10.0 }
-                        ],
-                        observacion: "Capacidad sobresaliente en lógica de programación, diseño limpio y desarrollo ágil."
-                    }
-                ],
-                c2: [
-                    {
-                        subject: "Matemática",
-                        profesor: "Prof. Gómez",
-                        icon: "fa-square-root-variable",
-                        evaluaciones: [
-                            { nombre: "Trigonometría y Funciones", fecha: "15 Ago", peso: "30%", nota: 9.0 },
-                            { nombre: "Derivadas y Límites", fecha: "22 Sep", peso: "35%", nota: 9.5 },
-                            { nombre: "Examen Final C2", fecha: "10 Nov", peso: "35%", nota: 9.0 }
-                        ],
-                        observacion: "Mantiene un nivel académico alto, con excelente constancia de estudio."
-                    },
-                    {
-                        subject: "Lengua y Literatura",
-                        profesor: "Prof. Martínez",
-                        icon: "fa-book-open",
-                        evaluaciones: [
-                            { nombre: "Ensayo Crítico", fecha: "18 Ago", peso: "35%", nota: 8.5 },
-                            { nombre: "Monografía Literaria", fecha: "25 Sep", peso: "35%", nota: 9.0 },
-                            { nombre: "Debate y Oratoria", fecha: "05 Nov", peso: "30%", nota: 9.5 }
-                        ],
-                        observacion: "Notable evolución en la elaboración argumental y claridad retórica."
-                    },
-                    {
-                        subject: "Historia",
-                        profesor: "Prof. Rossi",
-                        icon: "fa-landmark",
-                        evaluaciones: [
-                            { nombre: "Historia Contemporánea", fecha: "20 Ago", peso: "30%", nota: 9.5 },
-                            { nombre: "Investigación Documental", fecha: "28 Sep", peso: "35%", nota: 10.0 },
-                            { nombre: "Coloquio Integrador", fecha: "12 Nov", peso: "35%", nota: 9.5 }
-                        ],
-                        observacion: "Rigor investigativo excepcional y activa participación pedagógica."
-                    },
-                    {
-                        subject: "Física",
-                        profesor: "Prof. Benítez",
-                        icon: "fa-atom",
-                        evaluaciones: [
-                            { nombre: "Termodinámica", fecha: "12 Ago", peso: "30%", nota: 8.0 },
-                            { nombre: "Ondas y Electromagnetismo", fecha: "19 Sep", peso: "35%", nota: 8.5 },
-                            { nombre: "Proyecto Integrador", fecha: "08 Nov", peso: "35%", nota: 8.5 }
-                        ],
-                        observacion: "Firme mejoría en formulación matemática y modelos cinéticos."
-                    },
-                    {
-                        subject: "Biología",
-                        profesor: "Prof. Herrera",
-                        icon: "fa-dna",
-                        evaluaciones: [
-                            { nombre: "Ecosistemas y Ecología", fecha: "26 Ago", peso: "30%", nota: 9.0 },
-                            { nombre: "Trabajo de Campo", fecha: "15 Oct", peso: "35%", nota: 9.5 },
-                            { nombre: "Evaluación Integradora", fecha: "06 Nov", peso: "35%", nota: 9.0 }
-                        ],
-                        observacion: "Muy buen compromiso con temáticas ambientales y bioética."
-                    },
-                    {
-                        subject: "Inglés Técnico",
-                        profesor: "Prof. Williams",
-                        icon: "fa-language",
-                        evaluaciones: [
-                            { nombre: "Technical Writing", fecha: "10 Ago", peso: "30%", nota: 9.5 },
-                            { nombre: "Professional Pitch", fecha: "20 Sep", peso: "35%", nota: 9.0 },
-                            { nombre: "Evaluación Cierre", fecha: "04 Nov", peso: "35%", nota: 9.5 }
-                        ],
-                        observacion: "Habilidades comunicativas avanzadas aplicadas a contextos reales."
-                    },
-                    {
-                        subject: "Geografía",
-                        profesor: "Prof. Díaz",
-                        icon: "fa-earth-americas",
-                        evaluaciones: [
-                            { nombre: "Geopolítica y Recursos", fecha: "14 Ago", peso: "30%", nota: 8.5 },
-                            { nombre: "Análisis de Caso", fecha: "24 Sep", peso: "35%", nota: 8.5 },
-                            { nombre: "Evaluación Final", fecha: "09 Nov", peso: "35%", nota: 9.0 }
-                        ],
-                        observacion: "Pensamiento analítico crítico y contextualización de problemas globales."
-                    },
-                    {
-                        subject: "Informática y Programación",
-                        profesor: "Prof. Silva",
-                        icon: "fa-laptop-code",
-                        evaluaciones: [
-                            { nombre: "Bases de Datos SQL", fecha: "08 Ago", peso: "30%", nota: 10.0 },
-                            { nombre: "API REST y Backend", fecha: "18 Sep", peso: "35%", nota: 10.0 },
-                            { nombre: "Defensa de Proyecto", fecha: "11 Nov", peso: "35%", nota: 10.0 }
-                        ],
-                        observacion: "Desempeño sobresaliente. Dominio técnico y autonomía profesional."
-                    }
-                ]
+                c1: [],
+                c2: []
             },
-            files: [
-                { name: "material_estudio.pdf", size: "1.2 MB", date: "02 Sep" },
-                { name: "ejercicios_math.pdf", size: "840 KB", date: "08 Sep" },
-                { name: "guia_historia.pdf", size: "2.1 MB", date: "15 Sep" }
-            ],
+            files: [],
             attendance: {
-                present: 28,
-                absent: 2,
-                late: 1
+                present: 0,
+                absent: 0,
+                late: 0
             },
             edgeOnline: navigator.onLine
         };
+
+        function armarLibretaDesdeNotas(grades) {
+            const materiasMap = {};
+            (grades || []).forEach(g => {
+                const sub = g.subject || 'Materia';
+                if (!materiasMap[sub]) {
+                    materiasMap[sub] = {
+                        subject: sub,
+                        profesor: 'Docente a cargo',
+                        icon: 'fa-book-bookmark',
+                        evaluaciones: [],
+                        observacion: 'Calificación registrada en el sistema.'
+                    };
+                }
+                materiasMap[sub].evaluaciones.push({
+                    nombre: g.title || 'Evaluación',
+                    fecha: 'Ciclo 2026',
+                    peso: g.ponderacion || '100%',
+                    nota: parseFloat(g.score) || 0
+                });
+            });
+            return Object.values(materiasMap);
+        }
 
         function updateProfileUI() {
             const nameEl = document.getElementById("display-student-name");
@@ -1980,18 +1811,13 @@
                         if (data.alumno) {
                             state.alumno = Object.assign(state.alumno, data.alumno);
                         }
-                        if (data.grades && data.grades.length > 0) {
-                            state.grades = data.grades;
-                        }
+                        state.grades = data.grades || [];
+                        state.libreta = { c1: armarLibretaDesdeNotas(state.grades), c2: [] };
                         if (data.attendance) {
                             state.attendance = data.attendance;
                         }
-                        if (data.reminders && data.reminders.length > 0) {
-                            state.reminders = data.reminders;
-                        }
-                        if (data.files && data.files.length > 0) {
-                            state.files = data.files;
-                        }
+                        state.reminders = data.reminders || [];
+                        state.files = data.files || [];
 
                         console.info("[EducTrack] Panel sincronizado con MySQL para " + state.alumno.nombreCompleto);
                     }
@@ -2246,6 +2072,16 @@
             }
 
             const currentSubjects = (state.libreta && state.libreta[period]) ? state.libreta[period] : [];
+            if (currentSubjects.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1/-1; padding: 40px 20px; text-align: center; color: #64748b; background: white; border-radius: 12px; border: 1px dashed #cbd5e1;"><i class="fa-solid fa-graduation-cap" style="font-size: 32px; color: #94a3b8; margin-bottom: 12px; display: block;"></i><h4 style="font-size: 15px; font-weight: 700; color: #334155; margin-bottom: 6px;">No hay calificaciones registradas</h4><p style="font-size: 13px; color: #64748b; margin: 0;">Tus docentes aún no han registrado notas para este período.</p></div>';
+                const overallAvgEl = document.getElementById("overall-average");
+                if (overallAvgEl) overallAvgEl.textContent = "0.00";
+                const diagTop = document.getElementById("diag-top-subject");
+                if (diagTop) diagTop.textContent = "-";
+                const diagApproved = document.getElementById("diag-approved-count");
+                if (diagApproved) diagApproved.textContent = "0 de 0 (0%)";
+                return;
+            }
             let totalPeriod = 0;
             let highestSubject = { name: "-", score: -1 };
             let approvedCount = 0;
@@ -2739,6 +2575,10 @@
                 list = list.slice(0, 2);
             }
 
+            if (list.length === 0) {
+                container.innerHTML = '<div style="padding: 25px 15px; text-align: center; color: #64748b; font-size: 13px;">No hay avisos ni tareas pendientes.</div>';
+                return;
+            }
             list.forEach(function (r) {
                 const card = document.createElement("div");
                 card.className = "reminder-card";
@@ -2797,7 +2637,7 @@
         /* --- ASISTENCIA --- */
         function updateAttendance() {
             const total = state.attendance.present + state.attendance.absent + state.attendance.late;
-            const percentage = Math.round((state.attendance.present / total) * 100);
+            const percentage = total > 0 ? Math.round((state.attendance.present / total) * 100) : 0;
 
             document.getElementById("count-present").textContent = state.attendance.present;
             document.getElementById("count-absent").textContent = state.attendance.absent;
@@ -2819,6 +2659,10 @@
             const container = document.getElementById("file-list-container");
             container.innerHTML = "";
 
+            if (!state.files || state.files.length === 0) {
+                container.innerHTML = '<div style="padding: 25px 15px; text-align: center; color: #64748b; font-size: 13px;">No hay archivos compartidos por tus docentes.</div>';
+                return;
+            }
             state.files.forEach(function (f) {
                 const item = document.createElement("div");
                 item.className = "file-item";

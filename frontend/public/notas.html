@@ -396,16 +396,8 @@
 <script>
   const STORAGE_KEY = 'educTrack_calificaciones_data';
 
-  // Base de datos de alumnos con notas independientes para cada cuatrimestre
-  const ALUMNOS_DEFECTO = [
-    { id: 1, nombre: "Lucas Benítez", cuatrimestre1: [9.0, 8.5, 9.5], cuatrimestre2: [8.5, 9.0, 10.0] },
-    { id: 2, nombre: "Martina Fernández", cuatrimestre1: [8.0, 7.5, 8.5], cuatrimestre2: [9.0, 8.5, 9.0] },
-    { id: 3, nombre: "Santiago Gómez", cuatrimestre1: [10.0, 9.0, 9.5], cuatrimestre2: [9.5, 9.5, 10.0] },
-    { id: 4, nombre: "Valentina López", cuatrimestre1: [7.0, 8.0, 7.5], cuatrimestre2: [8.0, 7.5, 8.5] },
-    { id: 5, nombre: "Mateo Rodríguez", cuatrimestre1: [8.5, 8.0, 9.0], cuatrimestre2: [7.5, 8.5, 8.0] },
-    { id: 6, nombre: "Agustín Morales", cuatrimestre1: [9.0, 8.5, 9.0], cuatrimestre2: [8.5, 9.0, 9.5] },
-    { id: 7, nombre: "Camila Fernández", cuatrimestre1: [8.5, 9.0, 8.5], cuatrimestre2: [9.0, 9.5, 9.0] }
-  ];
+  // Base de datos de alumnos cargada desde TiDB Cloud
+  const ALUMNOS_DEFECTO = [];
 
   let alumnos = [];
   let cuatrimestreActivo = 1; // 1 o 2 (únicamente 2 cuatrimestres, sin Examen Final)
@@ -474,9 +466,11 @@
 
     // Filas de alumnos según cuatrimestre seleccionado
     tbody.innerHTML = '';
-    let sumaTotalPromedios = 0;
-    let alumnosConNota = 0;
-    let aprobadosCount = 0;
+    if (!alumnos || alumnos.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="${evalCount + 3}" style="padding: 40px 20px; text-align: center; color: #9ca3af; font-size: 13px;">No hay alumnos cargados en este curso.<br><span style="font-size:11px; color:#6b7280;">Podés crearlos desde el panel de administración.</span></td></tr>`;
+      actualizarEstadisticas(0, 0, 0);
+      return;
+    }
 
     const propCuatrimestre = `cuatrimestre${cuatrimestreActivo}`;
 
@@ -631,9 +625,46 @@
   const labelCurso = document.getElementById('labelCursoNotas');
   if (labelCurso) labelCurso.textContent = `${curso} • ${materia}`;
 
+  async function sincronizarAlumnosBackend() {
+    const cursoNum = parseInt(curso.charAt(0)) || 1;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const res = await fetch(`/api/profesor/alumnos/${cursoNum}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && data.alumnos && data.alumnos.length > 0) {
+          const mapaExistente = {};
+          alumnos.forEach(a => { mapaExistente[a.id] = a; });
+
+          alumnos = data.alumnos.map(a => {
+            const ex = mapaExistente[a.id_alumno];
+            return {
+              id: a.id_alumno,
+              nombre: `${a.nombre} ${a.apellido || ''}`.trim(),
+              cuatrimestre1: ex?.cuatrimestre1 || [],
+              cuatrimestre2: ex?.cuatrimestre2 || []
+            };
+          });
+          renderTable();
+          guardarDatos();
+        } else if (data.ok && data.alumnos && data.alumnos.length === 0) {
+          alumnos = [];
+          renderTable();
+        }
+      }
+    } catch (e) {
+      console.warn('[Notas] Error al cargar alumnos de TiDB:', e);
+    }
+  }
+
   // Inicializar
   cargarDatos();
   renderTable();
+  sincronizarAlumnosBackend();
 </script>
 </body>
 </html>

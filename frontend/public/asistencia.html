@@ -482,17 +482,8 @@
         const materiaActiva = sessionStorage.getItem('materiaActiva') || localStorage.getItem('materiaActiva') || 'Matemáticas';
         const STORAGE_KEY = `educTrack_asistencia_${cursoActivo}_${materiaActiva}`;
 
-        // Alumnos por defecto (se enriquecen con la API del backend si está disponible)
-        let alumnosDB = [
-            { id: 1, nombre: "Lucas Benítez" },
-            { id: 2, nombre: "Martina Fernández" },
-            { id: 3, nombre: "Santiago Gómez" },
-            { id: 4, nombre: "Valentina López" },
-            { id: 5, nombre: "Mateo Rodríguez" },
-            { id: 6, nombre: "Agustín Morales" },
-            { id: 7, nombre: "Camila Fernández" },
-            { id: 8, nombre: "Sofía Pérez" }
-        ];
+        // Alumnos cargados dinámicamente desde la base de datos TiDB Cloud
+        let alumnosDB = [];
 
         let asistenciaPorDia = {};
 
@@ -610,6 +601,11 @@
 
             const asistenciaDia = obtenerAsistenciaDia(currentYear, currentMonth, dia);
             list.innerHTML = "";
+
+            if (!alumnosDB || alumnosDB.length === 0) {
+                list.innerHTML = `<li style="padding: 30px; text-align: center; color: #9ca3af; font-size: 13px;">No hay alumnos cargados en este curso todavía.<br><span style="font-size: 11px; color: #6b7280;">Podés crearlos desde el panel de administración.</span></li>`;
+                return;
+            }
 
             alumnosDB.forEach((alumno, index) => {
                 const estado = asistenciaDia[alumno.id] || "Sin asignar";
