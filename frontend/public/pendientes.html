@@ -123,8 +123,15 @@
           <input type="hidden" id="recordatorioId">
 
           <div class="form-group">
-            <label for="recordatorioTitulo">Título</label>
-            <input type="text" id="recordatorioTitulo" placeholder="Ej: Trabajo Práctico de Derivadas" required>
+            <label for="recordatorioCursoSelect">Enviar a alumnos de</label>
+            <select id="recordatorioCursoSelect" style="width: 100%; padding: 10px 12px; border-radius: 10px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 14px; outline: none; margin-bottom: 6px;">
+              <option value="todos">Todos mis cursos</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="recordatorioTitulo">Título / Asunto</label>
+            <input type="text" id="recordatorioTitulo" placeholder="Ej: Trabajo Práctico de Matemáticas" required>
           </div>
 
           <div class="form-group">

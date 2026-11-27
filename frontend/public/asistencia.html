@@ -416,9 +416,11 @@
                 <i class="fa-solid fa-arrow-left"></i> Panel
             </a>
             <h1>Asistencia</h1>
-            <div class="course-badge" id="badgeCurso">
+            <div class="course-badge" id="badgeCurso" style="display: flex; align-items: center; gap: 8px;">
                 <span class="dot"></span>
-                <span id="labelCurso">4B • Matemáticas</span>
+                <select id="selectCursoAsistencia" style="background: transparent; border: none; color: #fff; font-weight: 700; font-size: 13px; outline: none; cursor: pointer;">
+                    <option value="" style="background: #2d0508; color: #fff;">Cargando cursos...</option>
+                </select>
             </div>
         </header>
 
@@ -642,12 +644,14 @@
             });
         }
 
-        cal.addEventListener("click", e => {
+        cal.addEventListener("click", async e => {
             const el = e.target.closest(".day:not(.other)");
             if (!el) return;
             cal.querySelectorAll(".day.selected").forEach(n => n.classList.remove("selected"));
             el.classList.add("selected");
-            renderizarAlumnos(parseInt(el.dataset.day, 10));
+            const diaSeleccionado = parseInt(el.dataset.day, 10);
+            await sincronizarAsistenciaDelDia(diaSeleccionado);
+            renderizarAlumnos(diaSeleccionado);
         });
 
         document.getElementById("prevMonth").addEventListener("click", () => {
@@ -662,32 +666,126 @@
             renderCalendar(currentYear, currentMonth);
         });
 
-        // Cargar alumnos reales desde el backend según el curso seleccionado
-        async function sincronizarAlumnosBackend() {
-            const labelCurso = document.getElementById('labelCurso');
-            if (labelCurso) labelCurso.textContent = `${cursoActivo} • ${materiaActiva}`;
+        // Obtener identificador del curso activo
+        function obtenerCursoIdActivo() {
+            const select = document.getElementById('selectCursoAsistencia');
+            if (select && select.value) return select.value;
+            return sessionStorage.getItem('cursoActivoId') || 
+                   sessionStorage.getItem('cursoActivo') || 
+                   localStorage.getItem('cursoActivoId') || 
+                   localStorage.getItem('cursoActivo') || '4';
+        }
 
+        // Cargar cursos asignados al profesor en el selector
+        async function cargarCursosDocente() {
             const token = localStorage.getItem('token');
-            if (!token) return;
+            const select = document.getElementById('selectCursoAsistencia');
+            if (!token || !select) return;
 
             const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
             try {
-                const res = await fetch(`${API_BASE}/api/profesor/alumnos/1`, {
+                const res = await fetch(`${API_BASE}/api/profesor/dashboard`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.ok && data.alumnos && data.alumnos.length > 0) {
-                        alumnosDB = data.alumnos.map((a, i) => ({
-                            id: a.id_alumno || i + 1,
-                            nombre: `${a.nombre} ${a.apellido || ''}`.trim()
+                    if (data.ok && Array.isArray(data.cursos) && data.cursos.length > 0) {
+                        select.innerHTML = '';
+                        const idActivo = sessionStorage.getItem('cursoActivoId');
+                        const nombreActivo = sessionStorage.getItem('cursoActivo');
+
+                        data.cursos.forEach(c => {
+                            const opt = document.createElement('option');
+                            opt.value = c.id_curso;
+                            opt.style.background = '#2d0508';
+                            opt.style.color = '#fff';
+                            const materiaStr = c.materias && c.materias[0] ? ` • ${c.materias[0].nombre}` : '';
+                            opt.textContent = `${c.nombre} (${c.descripcion || 'Curso'})${materiaStr}`;
+                            if (idActivo && String(c.id_curso) === String(idActivo)) {
+                                opt.selected = true;
+                            } else if (!idActivo && nombreActivo && c.nombre === nombreActivo) {
+                                opt.selected = true;
+                            }
+                            select.appendChild(opt);
+                        });
+                    }
+                }
+            } catch (err) {
+                console.warn('[Asistencia] Error al cargar lista de cursos:', err);
+            }
+        }
+
+        // Sincronizar asistencias guardadas para el día y curso actual desde la BD
+        async function sincronizarAsistenciaDelDia(dia = diaActivo) {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const cursoId = obtenerCursoIdActivo();
+            const mesFormatted = String(currentMonth + 1).padStart(2, '0');
+            const diaFormatted = String(dia).padStart(2, '0');
+            const fechaSQL = `${currentYear}-${mesFormatted}-${diaFormatted}`;
+
+            const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+            try {
+                const res = await fetch(`${API_BASE}/api/profesor/asistencia/${encodeURIComponent(cursoId)}?fecha=${fechaSQL}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.ok && Array.isArray(data.registros) && data.registros.length > 0) {
+                        const k = keyDia(currentYear, currentMonth, dia);
+                        if (!asistenciaPorDia[k]) asistenciaPorDia[k] = {};
+                        data.registros.forEach(r => {
+                            asistenciaPorDia[k][r.id_alumno] = r.estado;
+                        });
+                        const elementoDia = cal.querySelector(`.day[data-day="${dia}"]:not(.other)`);
+                        if (elementoDia) elementoDia.classList.add("has-records");
+                    }
+                }
+            } catch (err) {
+                console.warn('[Asistencia] Error al consultar asistencia del día:', err);
+            }
+        }
+
+        // Cargar alumnos reales desde el backend según el curso seleccionado
+        async function sincronizarAlumnosBackend() {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const cursoId = obtenerCursoIdActivo();
+            const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/profesor/alumnos/${encodeURIComponent(cursoId)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.ok && Array.isArray(data.alumnos)) {
+                        alumnosDB = data.alumnos.map(a => ({
+                            id: a.id_alumno,
+                            nombre: `${a.apellido ? a.apellido.toUpperCase() + ', ' : ''}${a.nombre}`.trim()
                         }));
+                        await sincronizarAsistenciaDelDia(diaActivo);
                         renderizarAlumnos(diaActivo);
                     }
                 }
             } catch (err) {
-                console.log('[Asistencia] Usando lista local precargada.');
+                console.warn('[Asistencia] Error al cargar alumnos de la base de datos:', err);
             }
+        }
+
+        // Cambio de curso desde el selector
+        const selectCurso = document.getElementById('selectCursoAsistencia');
+        if (selectCurso) {
+            selectCurso.addEventListener('change', async () => {
+                const idSeleccionado = selectCurso.value;
+                const optText = selectCurso.options[selectCurso.selectedIndex]?.text || '';
+                sessionStorage.setItem('cursoActivoId', idSeleccionado);
+                localStorage.setItem('cursoActivoId', idSeleccionado);
+                await sincronizarAlumnosBackend();
+                mostrarToast(`Curso cambiado: ${optText}`);
+            });
         }
 
         // Marcar todos como presentes para el día seleccionado
@@ -703,14 +801,54 @@
             mostrarToast(`Todos marcados Presentes para el día ${diaActivo} de ${MESES[currentMonth]}`);
         });
 
-        document.getElementById('btnGuardar').addEventListener('click', () => {
+        // Guardar asistencia tanto localmente como en la base de datos TiDB Cloud
+        document.getElementById('btnGuardar').addEventListener('click', async () => {
             guardarAsistenciaStorage();
-            mostrarToast(`¡Asistencia guardada correctamente para el día ${diaActivo}!`);
+            const token = localStorage.getItem('token');
+            const cursoId = obtenerCursoIdActivo();
+
+            const mesFormatted = String(currentMonth + 1).padStart(2, '0');
+            const diaFormatted = String(diaActivo).padStart(2, '0');
+            const fechaSQL = `${currentYear}-${mesFormatted}-${diaFormatted}`;
+
+            const asistenciaDia = obtenerAsistenciaDia(currentYear, currentMonth, diaActivo);
+            const registros = alumnosDB.map(a => ({
+                id_alumno: a.id,
+                estado: asistenciaDia[a.id] || 'Presente'
+            }));
+
+            const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+            try {
+                const res = await fetch(`${API_BASE}/api/profesor/asistencia`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        id_curso: cursoId,
+                        fecha: fechaSQL,
+                        registros
+                    })
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    mostrarToast(`¡Asistencia guardada en la base de datos para el día ${diaActivo}!`);
+                } else {
+                    mostrarToast(data.mensaje || `Asistencia guardada localmente para el día ${diaActivo}`);
+                }
+            } catch (err) {
+                mostrarToast(`Asistencia guardada localmente para el día ${diaActivo}`);
+            }
         });
 
+        // Inicio
         cargarAsistenciaGuardada();
-        sincronizarAlumnosBackend();
-        renderCalendar(currentYear, currentMonth);
+        (async () => {
+            await cargarCursosDocente();
+            await sincronizarAlumnosBackend();
+            renderCalendar(currentYear, currentMonth);
+        })();
     </script>
 </body>
 </html>

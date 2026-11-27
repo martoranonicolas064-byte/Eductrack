@@ -616,9 +616,11 @@
         </div>
 
         <section class="metrics" aria-label="Resumen de Métricas">
-          <div class="metric">
+          <div class="metric" id="btnAbrirModalReunion" style="cursor: pointer; position: relative;" title="Haz clic para programar una reunión de clase">
             <strong id="metricReunion">—</strong>
-            <span>Reunión clase</span>
+            <span style="display:flex; align-items:center; justify-content:center; gap:5px;">
+              Reunión clase <i class="fa-solid fa-calendar-plus" style="color:var(--red-bright); font-size:12px;"></i>
+            </span>
           </div>
           <div class="metric">
             <strong id="metricAlumnos">0</strong>
@@ -685,6 +687,46 @@
     </div>
   </div>
 
+  <!-- Modal 3: Programar Reunión de Clase -->
+  <div class="modal-overlay hidden" id="modalReunion" role="dialog" aria-modal="true" aria-labelledby="modalReunionTitle">
+    <div class="modal-card" style="max-width: 440px; text-align: left;">
+      <div class="modal-header" style="position:relative; text-align:center;">
+        <button type="button" class="modal-close-btn" onclick="cerrarModalReunion()" aria-label="Cerrar modal">&times;</button>
+        <h2 id="modalReunionTitle">Reunión de Clase</h2>
+        <p>Programa una clase o consulta virtual / presencial</p>
+      </div>
+      <div class="modal-body" style="padding: 10px 24px 24px;">
+        <form id="formReunion">
+          <div style="margin-bottom: 14px;">
+            <label style="display:block; font-size:12px; font-weight:700; color:#fff; margin-bottom:5px;">Curso</label>
+            <select id="reunionCursoSelect" style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.25); color:#fff; font-size:14px; outline:none;"></select>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+            <div>
+              <label style="display:block; font-size:12px; font-weight:700; color:#fff; margin-bottom:5px;">Fecha</label>
+              <input type="date" id="reunionFecha" required style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.25); color:#fff; font-size:14px; outline:none; box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="display:block; font-size:12px; font-weight:700; color:#fff; margin-bottom:5px;">Hora</label>
+              <input type="time" id="reunionHora" required style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.25); color:#fff; font-size:14px; outline:none; box-sizing:border-box;">
+            </div>
+          </div>
+          <div style="margin-bottom: 14px;">
+            <label style="display:block; font-size:12px; font-weight:700; color:#fff; margin-bottom:5px;">Título / Tema</label>
+            <input type="text" id="reunionTitulo" placeholder="Ej: Clase de Repaso / Consulta" required style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.25); color:#fff; font-size:14px; outline:none; box-sizing:border-box;">
+          </div>
+          <div style="margin-bottom: 18px;">
+            <label style="display:block; font-size:12px; font-weight:700; color:#fff; margin-bottom:5px;">Detalle o Enlace (Opcional)</label>
+            <textarea id="reunionDetalle" rows="2" placeholder="Aula 12, o enlace Meet / Zoom..." style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.25); color:#fff; font-size:13px; outline:none; resize:none; box-sizing:border-box;"></textarea>
+          </div>
+          <button type="submit" id="btnGuardarReunion" style="width:100%; padding:12px; background:var(--red-bright, #ff3b3b); color:#120304; font-weight:800; font-size:14px; border:none; border-radius:12px; cursor:pointer; transition:transform 0.15s, background 0.15s;">
+            <i class="fa-solid fa-floppy-disk"></i> Guardar y Notificar a Alumnos
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script>
     let cursosData = [];
 
@@ -695,7 +737,7 @@
       return { curso, materia };
     }
 
-    function guardarContexto(curso, materia) {
+    function guardarContexto(curso, materia, idCurso) {
       if (curso) {
         sessionStorage.setItem('cursoActivo', curso);
         localStorage.setItem('cursoActivo', curso);
@@ -703,6 +745,10 @@
       if (materia) {
         sessionStorage.setItem('materiaActiva', materia);
         localStorage.setItem('materiaActiva', materia);
+      }
+      if (idCurso) {
+        sessionStorage.setItem('cursoActivoId', idCurso);
+        localStorage.setItem('cursoActivoId', idCurso);
       }
     }
 
@@ -841,7 +887,13 @@
     }
 
     function elegirCurso(curso) {
+      const cObj = cursosData.find(c => c.nombre === curso || c.id_curso == curso);
+      const cursoId = cObj ? cObj.id_curso : null;
       sessionStorage.setItem('cursoActivo', curso);
+      if (cursoId) {
+        sessionStorage.setItem('cursoActivoId', cursoId);
+        localStorage.setItem('cursoActivoId', cursoId);
+      }
       document.getElementById('cursoLabel').textContent = curso;
 
       renderizarMateriasPorCurso(curso);
@@ -853,7 +905,8 @@
 
     function elegirMateria(materia) {
       const curso = sessionStorage.getItem('cursoActivo') || '4B';
-      guardarContexto(curso, materia);
+      const cursoId = sessionStorage.getItem('cursoActivoId');
+      guardarContexto(curso, materia, cursoId);
 
       // Cerrar apartado de materias y volver al panel
       document.getElementById('modalMateria').classList.add('hidden');
@@ -866,6 +919,92 @@
       document.getElementById('modalMateria').classList.add('hidden');
       document.getElementById('modalCurso').classList.remove('hidden');
     }
+
+    // ── 3. Manejo de Modal de Reunión de Clases ───────────────────────
+    function abrirModalReunion() {
+      const select = document.getElementById('reunionCursoSelect');
+      if (select && cursosData.length > 0) {
+        select.innerHTML = '';
+        cursosData.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id_curso;
+          opt.textContent = `${c.nombre} (${c.descripcion || ''})`;
+          select.appendChild(opt);
+        });
+        const activoId = sessionStorage.getItem('cursoActivoId');
+        if (activoId) select.value = activoId;
+      }
+
+      // Por defecto la fecha de hoy y hora próxima
+      const fInput = document.getElementById('reunionFecha');
+      const hInput = document.getElementById('reunionHora');
+      if (fInput) {
+        const d = new Date();
+        fInput.value = d.toISOString().split('T')[0];
+      }
+      if (hInput) {
+        hInput.value = '10:00';
+      }
+
+      document.body.classList.add('modal-open');
+      document.getElementById('modalReunion').classList.remove('hidden');
+    }
+
+    function cerrarModalReunion() {
+      document.getElementById('modalReunion').classList.add('hidden');
+      document.body.classList.remove('modal-open');
+    }
+
+    // Enviar formulario de reunión al backend
+    const formReunion = document.getElementById('formReunion');
+    if (formReunion) {
+      formReunion.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id_curso = document.getElementById('reunionCursoSelect').value;
+        const fecha = document.getElementById('reunionFecha').value;
+        const hora = document.getElementById('reunionHora').value;
+        const titulo = document.getElementById('reunionTitulo').value.trim();
+        const descripcion = document.getElementById('reunionDetalle').value.trim();
+
+        const token = localStorage.getItem('token');
+        const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+
+        try {
+          const res = await fetch(`${API_BASE}/api/profesor/reunion`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              id_curso,
+              fecha,
+              hora,
+              titulo,
+              descripcion
+            })
+          });
+
+          const data = await res.json();
+          if (data.ok) {
+            cerrarModalReunion();
+            // Formatear la fecha visualmente para la métrica
+            const partesFecha = fecha.split('-');
+            const metricStr = `${parseInt(partesFecha[2], 10)}/${parseInt(partesFecha[1], 10)} - ${hora}`;
+            document.getElementById('metricReunion').textContent = metricStr;
+            alert('¡Reunión de clase programada exitosamente! Se notificará a los alumnos del curso.');
+          } else {
+            alert(data.mensaje || 'Error al programar la reunión');
+          }
+        } catch (err) {
+          console.error('Error al guardar reunión:', err);
+          alert('Error de conexión al programar reunión');
+        }
+      });
+    }
+
+    const btnAbrirReunion = document.getElementById('btnAbrirModalReunion');
+    if (btnAbrirReunion) btnAbrirReunion.addEventListener('click', abrirModalReunion);
 
     function cerrarSesion() {
       if (confirm('¿Desea cerrar la sesión del panel docente?')) {

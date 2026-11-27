@@ -1,45 +1,13 @@
 /**
  * EducTrack — Lógica y Gestión de Recordatorios y Pendientes
- * Controlador a prueba de errores con resolución dinámica de elementos DOM
+ * Conectado en tiempo real a la base de datos TiDB Cloud
  */
 (function() {
   'use strict';
 
   const STORAGE_KEY = 'educTrack_recordatorios';
-
-  // Datos iniciales representativos
-  const DEFAULT_RECORDATORIOS = [
-    {
-      id: 1,
-      titulo: 'Resumen: Álgebra y Matrices',
-      fecha: '2026-11-12',
-      resumen: 'Se explicaron matrices 2x3, cálculo de determinantes y la regla de Cramer. Resolver los ejercicios impares de la página.',
-      archivo: 'resumen_algebra_clase4.pdf'
-    },
-    {
-      id: 2,
-      titulo: 'Examen Parcial - Unidad 2',
-      fecha: '2026-11-18',
-      resumen: 'Evaluación presencial sobre funciones cuadráticas y sistemas de ecuaciones lineales. Traer calculadora científica.',
-      archivo: 'temario_examen_unidad2.pdf'
-    },
-    {
-      id: 3,
-      titulo: 'Reunión de Departamento Docente',
-      fecha: '2026-11-25',
-      resumen: 'Traer calculadora científica no programable y formulario para el parcial.',
-      archivo: 'orden_del_dia_reunion.docx'
-    },
-    {
-      id: 4,
-      titulo: 'Reunión de Departamento Docente',
-      fecha: '2026-11-25',
-      resumen: 'Coordinación trimestral para entrega de planillas de calificaciones y planificación del ciclo lectivo. Se requiere la presencia de todos los docentes para la firma de actas.',
-      archivo: 'orden_del_dia_reunion.docx'
-    }
-  ];
-
   let recordatorios = [];
+  let cursosDocente = [];
   let recordatorioActivoId = null;
 
   // ── Helper para obtener elementos de forma segura ──────────────────
@@ -54,32 +22,6 @@
     return null;
   }
 
-  // ── Carga y Persistencia ────────────────────────────────────────────
-  function cargarRecordatorios() {
-    try {
-      const dataRaw = localStorage.getItem(STORAGE_KEY);
-      if (dataRaw) {
-        const parsed = JSON.parse(dataRaw);
-        if (Array.isArray(parsed) && parsed.length >= 4) {
-          recordatorios = parsed;
-          return;
-        }
-      }
-    } catch (e) {
-      console.warn('[EducTrack] Error al leer recordatorios de localStorage:', e);
-    }
-    recordatorios = JSON.parse(JSON.stringify(DEFAULT_RECORDATORIOS));
-    guardarRecordatorios();
-  }
-
-  function guardarRecordatorios() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(recordatorios));
-    } catch (e) {
-      console.error('[EducTrack] Error al guardar en localStorage:', e);
-    }
-  }
-
   // ── Sincronizar Contexto Institucional ───────────────────────────────
   function sincronizarContexto() {
     const curso = sessionStorage.getItem('cursoActivo') || localStorage.getItem('cursoActivo') || '4B';
@@ -90,11 +32,91 @@
     }
   }
 
+  // ── Cargar cursos del docente para el selector ──────────────────────
+  async function cargarCursosDocente() {
+    const select = getEl('recordatorioCursoSelect');
+    if (!select) return;
+
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+    try {
+      const res = await fetch(`${API_BASE}/api/profesor/dashboard`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.cursos)) {
+          cursosDocente = data.cursos;
+          select.innerHTML = '<option value="todos">Todos mis cursos asignados</option>';
+          cursosDocente.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id_curso;
+            opt.textContent = `${c.nombre} (${c.descripcion || 'Curso'})`;
+            select.appendChild(opt);
+          });
+          const activoId = sessionStorage.getItem('cursoActivoId');
+          if (activoId) select.value = activoId;
+        }
+      }
+    } catch (e) {
+      console.warn('[Recordatorios] Error al cargar cursos:', e);
+    }
+  }
+
+  // ── Carga y Persistencia desde TiDB Cloud ───────────────────────────
+  async function cargarRecordatorios() {
+    const token = localStorage.getItem('token');
+    const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+
+    if (token) {
+      try {
+        const res = await fetch(`${API_BASE}/api/profesor/recordatorios`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok && Array.isArray(data.recordatorios)) {
+            recordatorios = data.recordatorios;
+            guardarRecordatoriosLocal();
+            renderizar();
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('[EducTrack] Servidor backend no alcanzable, usando caché local:', e);
+      }
+    }
+
+    try {
+      const dataRaw = localStorage.getItem(STORAGE_KEY);
+      if (dataRaw) {
+        const parsed = JSON.parse(dataRaw);
+        if (Array.isArray(parsed)) {
+          recordatorios = parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('[EducTrack] Error al leer recordatorios de localStorage:', e);
+      recordatorios = [];
+    }
+    renderizar();
+  }
+
+  function guardarRecordatoriosLocal() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(recordatorios));
+    } catch (e) {
+      console.error('[EducTrack] Error al guardar en localStorage:', e);
+    }
+  }
+
   // ── Formateo de Fecha Robusto ────────────────────────────────────────
   function formatearFecha(fechaStr) {
     if (!fechaStr) return '';
     try {
-      const partes = String(fechaStr).split(/[-/T]/);
+      const partes = String(fechaStr).split(/[-/T ]/);
       if (partes.length >= 3) {
         const y = partes[0].length === 4 ? partes[0] : partes[2];
         const m = partes[1];
@@ -134,9 +156,9 @@
       const coincideTexto = !textoBusqueda ||
         (item.titulo && item.titulo.toLowerCase().includes(textoBusqueda)) ||
         (item.resumen && item.resumen.toLowerCase().includes(textoBusqueda)) ||
-        (item.archivo && item.archivo.toLowerCase().includes(textoBusqueda));
+        (item.curso && item.curso.toLowerCase().includes(textoBusqueda));
 
-      const coincideFecha = !fechaFiltro || item.fecha === fechaFiltro;
+      const coincideFecha = !fechaFiltro || (item.fecha && item.fecha.startsWith(fechaFiltro));
 
       return coincideTexto && coincideFecha;
     });
@@ -147,7 +169,8 @@
       lista.innerHTML = `
         <li class="empty-state" style="padding:28px 16px; text-align:center; color:rgba(255,255,255,0.65);">
           <i class="fa-regular fa-folder-open" style="font-size:2rem; color:rgba(255,59,59,0.5); display:block; margin-bottom:8px;"></i>
-          <p>No se encontraron recordatorios con los criterios seleccionados.</p>
+          <p>No hay recordatorios registrados aún.</p>
+          <p style="font-size:12px; color:rgba(255,255,255,0.45); margin-top:4px;">Haz clic en "Crear recordatorio" para enviar un aviso a tus cursos.</p>
         </li>
       `;
       return;
@@ -161,17 +184,19 @@
       li.setAttribute('role', 'button');
       li.setAttribute('aria-label', `Ver detalle de ${item.titulo}`);
 
+      const cursoTag = item.curso ? `<span style="background:rgba(255,59,59,0.25); border:1px solid rgba(255,59,59,0.4); padding:2px 7px; border-radius:6px; font-size:11px; font-weight:700; color:#fff; margin-right:6px;">${escapeHtml(item.curso)}</span>` : '';
       const tieneArchivo = Boolean(item.archivo && item.archivo.trim());
-      const iconoArchivo = tieneArchivo
-        ? '<i class="fa-solid fa-file-pdf"></i>'
-        : '<i class="fa-regular fa-bell"></i>';
+      const iconoArchivo = item.estado === 'reunion'
+        ? '<i class="fa-solid fa-video" style="color: #60a5fa;"></i>'
+        : (tieneArchivo ? '<i class="fa-solid fa-file-pdf"></i>' : '<i class="fa-regular fa-bell"></i>');
 
       li.innerHTML = `
         <div class="file-item__icon">${iconoArchivo}</div>
         <div class="file-item__info">
-          <span class="file-item__name">${escapeHtml(item.titulo)}</span>
+          <span class="file-item__name">${cursoTag}${escapeHtml(item.titulo)}</span>
           <span class="file-item__meta">
             <i class="fa-regular fa-calendar"></i> ${formatearFecha(item.fecha)}
+            ${item.materia ? `&bull; ${escapeHtml(item.materia)}` : ''}
             ${tieneArchivo ? `&bull; <i class="fa-solid fa-paperclip"></i> ${escapeHtml(item.archivo)}` : ''}
           </span>
           <span class="file-item__desc">${escapeHtml(item.resumen || '')}</span>
@@ -182,7 +207,6 @@
           </button>
         ` : ''}
         <i class="fa-solid fa-chevron-right" style="opacity:0.5; font-size:12px; margin-left:6px;"></i>
-        <span style="position:absolute; bottom:3px; right:8px; font-size:9px; opacity:0.35; color:#fff; pointer-events:none; letter-spacing:0.3px;">.file-item</span>
       `;
 
       li.addEventListener('click', () => abrirDetalle(item.id));
@@ -214,7 +238,10 @@
     const detalleArchivosContenedor = getEl('detalleArchivosContenedor');
     const detalleListaArchivos = getEl('detalleListaArchivos');
 
-    if (detalleTitulo) detalleTitulo.textContent = item.titulo;
+    if (detalleTitulo) {
+      const curTxt = item.curso ? `[${item.curso}] ` : '';
+      detalleTitulo.textContent = `${curTxt}${item.titulo}`;
+    }
 
     if (detalleFechaTexto) {
       detalleFechaTexto.textContent = formatearFecha(item.fecha);
@@ -262,7 +289,7 @@
     recordatorioActivoId = null;
   }
 
-  // ── Formulario: Crear / Editar ──────────────────────────────────────
+  // ── Formulario: Crear ───────────────────────────────────────────────
   function abrirModalCrear() {
     const modal = getEl('modalRecordatorio');
     const form = getEl('formRecordatorio');
@@ -282,39 +309,6 @@
       const hoy = new Date().toISOString().split('T')[0];
       inputFecha.value = hoy;
     }
-
-    if (modal) {
-      modal.classList.add('is-open');
-      modal.setAttribute('aria-hidden', 'false');
-      document.body.classList.add('modal-open');
-    }
-
-    if (inputTitulo) {
-      setTimeout(() => inputTitulo.focus(), 100);
-    }
-  }
-
-  function abrirModalEditar(id) {
-    const item = recordatorios.find(r => String(r.id) === String(id));
-    if (!item) return;
-
-    cerrarDetalle();
-
-    const modal = getEl('modalRecordatorio');
-    const inputId = getEl('recordatorioId');
-    const inputTitulo = getEl('recordatorioTitulo');
-    const inputResumen = getEl('recordatorioResumen');
-    const inputFecha = getEl('recordatorioFecha');
-    const inputArchivo = getEl('recordatorioArchivo');
-    const modalTitulo = getEl('modalTitulo');
-
-    if (inputId) inputId.value = item.id;
-    if (inputTitulo) inputTitulo.value = item.titulo || '';
-    if (inputResumen) inputResumen.value = item.resumen || '';
-    if (inputFecha) inputFecha.value = item.fecha || '';
-    if (inputArchivo) inputArchivo.value = item.archivo || '';
-
-    if (modalTitulo) modalTitulo.textContent = 'Editar recordatorio';
 
     if (modal) {
       modal.classList.add('is-open');
@@ -356,95 +350,79 @@
     const modalDetalleOverlay = getEl('modalDetalleOverlay');
     if (modalDetalleOverlay) modalDetalleOverlay.addEventListener('click', cerrarDetalle);
 
-    const btnEditar = getEl('btnEditarRecordatorio');
-    if (btnEditar) {
-      btnEditar.addEventListener('click', () => {
-        if (recordatorioActivoId) abrirModalEditar(recordatorioActivoId);
-      });
-    }
-
     const btnEliminar = getEl('btnEliminarTarea');
     if (btnEliminar) {
-      btnEliminar.addEventListener('click', () => {
+      btnEliminar.addEventListener('click', async () => {
         if (!recordatorioActivoId) return;
         if (confirm('¿Desea eliminar este recordatorio?')) {
+          const token = localStorage.getItem('token');
+          const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+          try {
+            await fetch(`${API_BASE}/api/profesor/recordatorios/${recordatorioActivoId}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+          } catch (e) {
+            console.warn('Error al eliminar en backend:', e);
+          }
           recordatorios = recordatorios.filter(r => String(r.id) !== String(recordatorioActivoId));
-          guardarRecordatorios();
+          guardarRecordatoriosLocal();
           cerrarDetalle();
           renderizar();
         }
       });
     }
 
-    // Selector de archivo local opcional
-    let archivoRecordatorioData = null;
-    const filePicker = getEl('recordatorioFileInput');
-    if (filePicker) {
-      filePicker.addEventListener('change', (e) => {
-        if (e.target.files && e.target.files.length > 0) {
-          const file = e.target.files[0];
-          const inputArchivo = getEl('recordatorioArchivo');
-          if (inputArchivo) {
-            inputArchivo.value = file.name;
-          }
-          const reader = new FileReader();
-          reader.onload = function(evt) {
-            archivoRecordatorioData = evt.target.result;
-          };
-          reader.readAsDataURL(file);
-        } else {
-          archivoRecordatorioData = null;
-        }
-      });
-    }
-
     const form = getEl('formRecordatorio');
     if (form) {
-      form.addEventListener('submit', (e) => {
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const inputTitulo = getEl('recordatorioTitulo');
         const inputResumen = getEl('recordatorioResumen');
         const inputFecha = getEl('recordatorioFecha');
-        const inputArchivo = getEl('recordatorioArchivo');
-        const inputId = getEl('recordatorioId');
+        const selectCurso = getEl('recordatorioCursoSelect');
 
         const titulo = inputTitulo ? inputTitulo.value.trim() : '';
         const resumen = inputResumen ? inputResumen.value.trim() : '';
         const fecha = inputFecha ? inputFecha.value : '';
-        const archivo = inputArchivo ? inputArchivo.value.trim() : '';
-        const idVal = inputId ? inputId.value : '';
+        const cursoVal = selectCurso ? selectCurso.value : 'todos';
 
         if (!titulo || !resumen || !fecha) {
           alert('Por favor complete todos los campos obligatorios (Título, Resumen y Fecha).');
           return;
         }
 
-        if (idVal) {
-          const idx = recordatorios.findIndex(r => String(r.id) === String(idVal));
-          if (idx !== -1) {
-            recordatorios[idx] = {
-              ...recordatorios[idx],
+        const token = localStorage.getItem('token');
+        const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+
+        try {
+          const res = await fetch(`${API_BASE}/api/profesor/recordatorios`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              id_curso: cursoVal === 'todos' ? null : cursoVal,
+              todos_los_cursos: cursoVal === 'todos',
               titulo,
-              resumen,
-              fecha,
-              archivo,
-              archivoData: archivoRecordatorioData || recordatorios[idx].archivoData
-            };
-          }
-        } else {
-          recordatorios.unshift({
-            id: Date.now(),
-            titulo,
-            resumen,
-            fecha,
-            archivo,
-            archivoData: archivoRecordatorioData
+              contenido: resumen,
+              fecha_limite: fecha
+            })
           });
+          const data = await res.json();
+          if (data.ok) {
+            alert('¡Recordatorio enviado con éxito a los alumnos del curso!');
+            await cargarRecordatorios();
+          } else {
+            alert(data.mensaje || 'Error al guardar recordatorio');
+          }
+        } catch (err) {
+          console.error('Error al guardar recordatorio:', err);
+          alert('Recordatorio guardado localmente');
         }
 
-        archivoRecordatorioData = null;
-        guardarRecordatorios();
         cerrarModalForm();
         renderizar();
       });
@@ -469,14 +447,6 @@
       });
     }
 
-    // Botón de menú en cabecera: regresar al panel docente
-    const menuBtn = getEl(null, '.menu-btn');
-    if (menuBtn) {
-      menuBtn.addEventListener('click', () => {
-        window.location.href = 'profe.html';
-      });
-    }
-
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         cerrarModalForm();
@@ -490,28 +460,15 @@
     const item = recordatorios.find(r => String(r.id) === String(id));
     if (!item) return;
 
-    const curso = sessionStorage.getItem('cursoActivo') || localStorage.getItem('cursoActivo') || '4B';
-    const materia = sessionStorage.getItem('materiaActiva') || localStorage.getItem('materiaActiva') || 'Matemáticas';
-    const nombreArchivo = (item.archivo && item.archivo.toLowerCase().endsWith('.pdf')) 
-      ? item.archivo 
-      : `${(item.titulo || 'Recordatorio').replace(/[^a-zA-Z0-9_-]/g, '_')}_${curso}.pdf`;
-
-    if (item.archivoData && item.archivoData.startsWith('data:')) {
-      const a = document.createElement('a');
-      a.href = item.archivoData;
-      a.download = nombreArchivo;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      return;
-    }
+    const curso = item.curso || sessionStorage.getItem('cursoActivo') || '4B';
+    const materia = item.materia || sessionStorage.getItem('materiaActiva') || 'General';
+    const nombreArchivo = `${(item.titulo || 'Recordatorio').replace(/[^a-zA-Z0-9_-]/g, '_')}_${curso}.pdf`;
 
     const sanitizar = (s) => (s || '').replace(/[\r\n\t]/g, ' ').replace(/[\\()]/g, '');
     const tit = sanitizar(item.titulo);
     const cur = sanitizar(curso);
     const mat = sanitizar(materia);
     const fec = sanitizar(item.fecha);
-    const arch = sanitizar(item.archivo || 'resumen_clase.pdf');
     const rawDesc = sanitizar(item.resumen || 'Sin resumen o consignas detalladas.');
 
     const palabras = rawDesc.split(' ');
@@ -530,24 +487,22 @@
     let stream = `BT
 /F1 18 Tf
 50 730 Td
-(EDUCTRACK - RESUMEN DE CLASE Y RECORDATORIO) Tj
+(EDUCTRACK - RECORDATORIO INSTITUCIONAL) Tj
 0 -26 Td
 /F1 13 Tf
 (Materia: ${mat}   |   Curso: ${cur}) Tj
 0 -20 Td
 /F2 10 Tf
-(Fecha del Recordatorio / Clase: ${fec}) Tj
-0 -16 Td
-(Archivo adjunto de referencia: ${arch}) Tj
+(Fecha del Recordatorio / Plazo: ${fec}) Tj
 0 -28 Td
 /F1 12 Tf
-(TEMA / TITULO DEL RECORDATORIO:) Tj
+(ASUNTO / TITULO:) Tj
 0 -18 Td
 /F2 11 Tf
 (${tit}) Tj
 0 -24 Td
 /F1 11 Tf
-(Resumen de lo trabajado en clase / Avisos importantes:) Tj
+(Instrucciones / Informacion:) Tj
 /F2 10 Tf
 `;
 
@@ -606,11 +561,11 @@ ${offset}
   };
 
   // ── Inicialización ──────────────────────────────────────────────────
-  function init() {
+  async function init() {
     sincronizarContexto();
-    cargarRecordatorios();
     inicializarEventos();
-    renderizar();
+    await cargarCursosDocente();
+    await cargarRecordatorios();
   }
 
   if (document.readyState === 'loading') {

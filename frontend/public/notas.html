@@ -626,12 +626,12 @@
   if (labelCurso) labelCurso.textContent = `${curso} • ${materia}`;
 
   async function sincronizarAlumnosBackend() {
-    const cursoNum = parseInt(curso.charAt(0)) || 1;
+    const cursoParam = sessionStorage.getItem('cursoActivoId') || sessionStorage.getItem('cursoActivo') || curso || '4';
     const token = localStorage.getItem('token');
     if (!token) return;
 
     try {
-      const res = await fetch(`/api/profesor/alumnos/${cursoNum}`, {
+      const res = await fetch(`/api/profesor/alumnos/${encodeURIComponent(cursoParam)}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
