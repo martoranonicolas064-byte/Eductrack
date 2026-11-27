@@ -1472,7 +1472,7 @@
                             <div id="display-student-legajo">Legajo: —</div>
                         </div>
                         <div style="text-align: right;">
-                            <b id="display-student-curso">4° Año B</b> - <span id="display-student-turno">Turno Mañana</span><br>
+                            <b id="display-student-curso">—</b> - <span id="display-student-turno">Turno Mañana</span><br>
                             Ciclo Lectivo <span id="display-student-cohorte">2026</span>
                         </div>
                     </div>
@@ -1657,9 +1657,9 @@
                     </div>
                     <p style="margin-bottom: 8px;">Por la presente se certifica que el/la estudiante:</p>
                     <div style="background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                        <strong style="font-size: 0.95rem; color: #0f172a;" id="cert-nombre-alumno">Lucas Fernández</strong><br>
-                        <span style="color: #475569;" id="cert-legajo-alumno">Legajo: ALU-2026-8492</span><br>
-                        <span style="color: #475569;" id="cert-curso-alumno">Curso: 4° Año B — Turno Mañana</span>
+                        <strong style="font-size: 0.95rem; color: #0f172a;" id="cert-nombre-alumno">Estudiante</strong><br>
+                        <span style="color: #475569;" id="cert-legajo-alumno">Legajo: —</span><br>
+                        <span style="color: #475569;" id="cert-curso-alumno">Curso: —</span>
                     </div>
                     <p style="margin-bottom: 8px;">Reviste la condición de <b>ALUMNO REGULAR ACTIVO</b> en el Ciclo Lectivo <b>2026</b>, registrando una asistencia computada del <b>90.3%</b> y un promedio general acumulado de <b id="cert-promedio-alumno" style="color: #16a34a;">8.75</b>.</p>
                     <p style="font-size: 0.72rem; color: #64748b; margin-top: 12px; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
@@ -1739,17 +1739,17 @@
             const nameEl = document.getElementById("display-student-name");
             if (nameEl) {
                 const nombreMostrar = state.alumno.nombreCompleto || `${state.alumno.nombre || ''} ${state.alumno.apellido || ''}`.trim();
-                nameEl.textContent = nombreMostrar || "Lucas Fernández";
+                nameEl.textContent = nombreMostrar || "Estudiante";
             }
 
             const legajoEl = document.getElementById("display-student-legajo");
             if (legajoEl) {
-                legajoEl.textContent = "Legajo: " + (state.alumno.legajo || `ALU-2026-${String(state.alumno.id || 104).padStart(4, '0')}`);
+                legajoEl.textContent = "Legajo: " + (state.alumno.legajo || (state.alumno.id ? `ALU-${new Date().getFullYear()}-${String(state.alumno.id).padStart(4, '0')}` : '—'));
             }
 
             const cursoEl = document.getElementById("display-student-curso");
             if (cursoEl) {
-                cursoEl.textContent = state.alumno.curso || "4° Año B";
+                cursoEl.textContent = state.alumno.curso || "—";
             }
 
             const turnoEl = document.getElementById("display-student-turno");
@@ -1938,15 +1938,15 @@
             if (!modal) return;
             const certNombre = document.getElementById("cert-nombre-alumno");
             if (certNombre) {
-                certNombre.textContent = state.alumno.nombreCompleto || `${state.alumno.nombre || ''} ${state.alumno.apellido || ''}`.trim() || "Lucas Fernández";
+                certNombre.textContent = state.alumno.nombreCompleto || `${state.alumno.nombre || ''} ${state.alumno.apellido || ''}`.trim() || "Estudiante";
             }
             const certLegajo = document.getElementById("cert-legajo-alumno");
             if (certLegajo) {
-                certLegajo.textContent = "Legajo: " + (state.alumno.legajo || `ALU-2026-${String(state.alumno.id || 104).padStart(4, '0')}`);
+                certLegajo.textContent = "Legajo: " + (state.alumno.legajo || (state.alumno.id ? `ALU-${new Date().getFullYear()}-${String(state.alumno.id).padStart(4, '0')}` : '—'));
             }
             const certCurso = document.getElementById("cert-curso-alumno");
             if (certCurso) {
-                certCurso.textContent = `Curso: ${state.alumno.curso || '4° Año B'} — Turno ${state.alumno.turno || 'Mañana'}`;
+                certCurso.textContent = `Curso: ${state.alumno.curso || '—'} — Turno ${state.alumno.turno || 'Mañana'}`;
             }
             modal.style.display = "flex";
             document.body.classList.add("modal-open");
@@ -1989,28 +1989,32 @@
         }
 
         // Helper para sincronizar si el profesor modificó notas en el panel docente (notas.html)
+        // Las notas vienen principalmente desde la API TiDB Cloud. Este helper complementa con
+        // calificaciones locales del docente alineadas por alumno real (no por nombre ficticio).
         function syncFromTeacherNotes() {
             try {
                 const dataRaw = localStorage.getItem("educTrack_calificaciones_data");
                 if (dataRaw) {
                     const parsed = JSON.parse(dataRaw);
                     if (parsed && Array.isArray(parsed.alumnos) && parsed.alumnos.length > 0) {
-                        const docenteLucas = parsed.alumnos.find(a => 
-                            (a.nombre && a.nombre.toLowerCase().includes("lucas"))
+                        // Buscar el alumno por id real si está disponible, sino usar el primero
+                        const alumnoId = state.alumno.id;
+                        const alumnoLocal = parsed.alumnos.find(a =>
+                            (a.id && alumnoId && String(a.id) === String(alumnoId))
                         ) || parsed.alumnos[0];
 
-                        if (docenteLucas) {
-                            if (docenteLucas.cuatrimestre1 && docenteLucas.cuatrimestre1.length > 0) {
-                                const mathC1 = state.libreta.c1.find(s => s.subject === "Matemática");
+                        if (alumnoLocal) {
+                            if (alumnoLocal.cuatrimestre1 && alumnoLocal.cuatrimestre1.length > 0) {
+                                const mathC1 = state.libreta.c1.find(s => s.subject === "Matemáticas" || s.subject === "Matemática");
                                 if (mathC1 && Array.isArray(mathC1.evaluaciones)) {
-                                    docenteLucas.cuatrimestre1.forEach((n, idx) => {
+                                    alumnoLocal.cuatrimestre1.forEach((n, idx) => {
                                         if (typeof n === 'number') {
                                             if (mathC1.evaluaciones[idx]) {
                                                 mathC1.evaluaciones[idx].nota = n;
                                             } else {
                                                 mathC1.evaluaciones.push({
                                                     nombre: `Evaluación ${idx + 1}`,
-                                                    fecha: "Docente",
+                                                    fecha: "Ciclo 2026",
                                                     peso: "33%",
                                                     nota: n
                                                 });
@@ -2019,17 +2023,17 @@
                                     });
                                 }
                             }
-                            if (docenteLucas.cuatrimestre2 && docenteLucas.cuatrimestre2.length > 0) {
-                                const mathC2 = state.libreta.c2.find(s => s.subject === "Matemática");
+                            if (alumnoLocal.cuatrimestre2 && alumnoLocal.cuatrimestre2.length > 0) {
+                                const mathC2 = state.libreta.c2.find(s => s.subject === "Matemáticas" || s.subject === "Matemática");
                                 if (mathC2 && Array.isArray(mathC2.evaluaciones)) {
-                                    docenteLucas.cuatrimestre2.forEach((n, idx) => {
+                                    alumnoLocal.cuatrimestre2.forEach((n, idx) => {
                                         if (typeof n === 'number') {
                                             if (mathC2.evaluaciones[idx]) {
                                                 mathC2.evaluaciones[idx].nota = n;
                                             } else {
                                                 mathC2.evaluaciones.push({
                                                     nombre: `Evaluación ${idx + 1}`,
-                                                    fecha: "Docente",
+                                                    fecha: "Ciclo 2026",
                                                     peso: "33%",
                                                     nota: n
                                                 });
@@ -2345,10 +2349,10 @@
 
             const c1Subjects = state.libreta.c1 || [];
             const c2Subjects = state.libreta.c2 || [];
-            const nombreAlumno = state.alumno.nombreCompleto || `${state.alumno.nombre || ''} ${state.alumno.apellido || ''}`.trim() || "Lucas Fernández";
-            const legajo = state.alumno.legajo || `ALU-2026-${String(state.alumno.id || 104).padStart(4, '0')}`;
-            const curso = state.alumno.curso || "4° Año B";
-            const turno = state.alumno.turno || "Turno Mañana";
+            const nombreAlumno = state.alumno.nombreCompleto || `${state.alumno.nombre || ''} ${state.alumno.apellido || ''}`.trim() || "Estudiante";
+            const legajo = state.alumno.legajo || (state.alumno.id ? `ALU-${new Date().getFullYear()}-${String(state.alumno.id).padStart(4, '0')}` : '—');
+            const curso = state.alumno.curso || "—";
+            const turno = state.alumno.turno || "Mañana";
             const cohorte = state.alumno.cohorte || "2026";
 
             let filasHtml = "";
