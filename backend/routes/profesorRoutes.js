@@ -7,7 +7,9 @@ const {
     programarReunion,
     getRecordatoriosProfesor,
     crearRecordatorioProfesor,
-    eliminarRecordatorioProfesor
+    eliminarRecordatorioProfesor,
+    getNotasPorCurso,
+    guardarNotas
 } = require('../controllers/profesorController');
 const { autenticarToken, esProfesor } = require('../middleware/authMiddleware');
 
@@ -22,6 +24,10 @@ router.get('/alumnos/:id_curso', autenticarToken, esProfesor, getAlumnosPorCurso
 // Asistencia
 router.post('/asistencia', autenticarToken, esProfesor, guardarAsistencia);
 router.get('/asistencia/:id_curso', autenticarToken, esProfesor, getAsistenciaPorFecha);
+
+// Calificaciones / Notas
+router.get('/notas/:id_curso', autenticarToken, esProfesor, getNotasPorCurso);
+router.post('/notas', autenticarToken, esProfesor, guardarNotas);
 
 // Programar reunión de clase
 router.post('/reunion', autenticarToken, esProfesor, programarReunion);

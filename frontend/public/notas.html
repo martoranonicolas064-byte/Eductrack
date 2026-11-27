@@ -345,9 +345,11 @@
       <i class="fa-solid fa-arrow-left"></i> Panel
     </a>
     <h1>Notas</h1>
-    <div class="course-badge">
+    <div class="course-badge" id="badgeCursoNotas" style="display: flex; align-items: center; gap: 8px;">
       <span class="dot"></span>
-      <span id="labelCursoNotas">4B • Matemáticas</span>
+      <select id="selectCursoNotas" style="background: transparent; border: none; color: #fff; font-weight: 700; font-size: 13px; outline: none; cursor: pointer;">
+        <option value="" style="background: #2d0508; color: #fff;">Cargando cursos...</option>
+      </select>
     </div>
   </header>
 
@@ -383,8 +385,8 @@
     <section class="panel" aria-label="Resumen de Calificaciones">
       <div class="panel-stats">
         <span>Período: <strong id="statPeriodoNombre">1° Cuatrimestre</strong></span>
-        <span>Promedio del Cuatrimestre: <strong id="statPromedio">8.6</strong></span>
-        <span>Aprobados: <strong id="statAprobados">100%</strong></span>
+        <span>Promedio del Cuatrimestre: <strong id="statPromedio">—</strong></span>
+        <span>Aprobados: <strong id="statAprobados">—</strong></span>
       </div>
       <button class="btn-guardar" id="btnGuardarNotas">
         <i class="fa-solid fa-floppy-disk"></i> Guardar Calificaciones
@@ -396,9 +398,6 @@
 <script>
   const STORAGE_KEY = 'educTrack_calificaciones_data';
 
-  // Base de datos de alumnos cargada desde TiDB Cloud
-  const ALUMNOS_DEFECTO = [];
-
   let alumnos = [];
   let cuatrimestreActivo = 1; // 1 o 2 (únicamente 2 cuatrimestres, sin Examen Final)
   let evalCounts = { 1: 3, 2: 3 };
@@ -409,7 +408,55 @@
   const countOutput = document.getElementById('count');
   const statPeriodoNombre = document.getElementById('statPeriodoNombre');
 
-  function cargarDatos() {
+  function obtenerCursoIdActivo() {
+    const select = document.getElementById('selectCursoNotas');
+    if (select && select.value) return select.value;
+    return sessionStorage.getItem('cursoActivoId') || 
+           sessionStorage.getItem('cursoActivo') || 
+           localStorage.getItem('cursoActivoId') || 
+           localStorage.getItem('cursoActivo') || '4';
+  }
+
+  // Cargar cursos asignados al docente
+  async function cargarCursosDocente() {
+    const token = localStorage.getItem('token');
+    const select = document.getElementById('selectCursoNotas');
+    if (!token || !select) return;
+
+    const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+    try {
+      const res = await fetch(`${API_BASE}/api/profesor/dashboard`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.cursos) && data.cursos.length > 0) {
+          select.innerHTML = '';
+          const idActivo = sessionStorage.getItem('cursoActivoId');
+          const nombreActivo = sessionStorage.getItem('cursoActivo');
+
+          data.cursos.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id_curso;
+            opt.style.background = '#2d0508';
+            opt.style.color = '#fff';
+            const materiaStr = c.materias && c.materias[0] ? ` • ${c.materias[0].nombre}` : '';
+            opt.textContent = `${c.nombre} (${c.descripcion || 'Curso'})${materiaStr}`;
+            if (idActivo && String(c.id_curso) === String(idActivo)) {
+              opt.selected = true;
+            } else if (!idActivo && nombreActivo && c.nombre === nombreActivo) {
+              opt.selected = true;
+            }
+            select.appendChild(opt);
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('[Notas] Error al cargar lista de cursos:', err);
+    }
+  }
+
+  function cargarDatosLocal() {
     try {
       const guardado = localStorage.getItem(STORAGE_KEY);
       if (guardado) {
@@ -423,10 +470,10 @@
     } catch (e) {
       console.warn('[Notas] Error al cargar notas de localStorage:', e);
     }
-    alumnos = JSON.parse(JSON.stringify(ALUMNOS_DEFECTO));
+    alumnos = [];
   }
 
-  function guardarDatos() {
+  function guardarDatosLocal() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ alumnos, evalCounts }));
     } catch (e) {
@@ -468,10 +515,14 @@
     tbody.innerHTML = '';
     if (!alumnos || alumnos.length === 0) {
       tbody.innerHTML = `<tr><td colspan="${evalCount + 3}" style="padding: 40px 20px; text-align: center; color: #9ca3af; font-size: 13px;">No hay alumnos cargados en este curso.<br><span style="font-size:11px; color:#6b7280;">Podés crearlos desde el panel de administración.</span></td></tr>`;
-      actualizarEstadisticas(0, 0, 0);
+      document.getElementById('statPromedio').textContent = '—';
+      document.getElementById('statAprobados').textContent = '—';
       return;
     }
 
+    let sumaTotalPromedios = 0;
+    let alumnosConNota = 0;
+    let aprobadosCount = 0;
     const propCuatrimestre = `cuatrimestre${cuatrimestreActivo}`;
 
     alumnos.forEach((al, index) => {
@@ -509,11 +560,11 @@
     });
 
     // Actualizar métricas del cuatrimestre
-    const promGeneral = alumnosConNota > 0 ? (sumaTotalPromedios / alumnosConNota).toFixed(2) : '-';
-    const porcAprobados = alumnosConNota > 0 ? Math.round((aprobadosCount / alumnosConNota) * 100) : 100;
+    const promGeneral = alumnosConNota > 0 ? (sumaTotalPromedios / alumnosConNota).toFixed(2) : '—';
+    const porcAprobados = alumnosConNota > 0 ? `${Math.round((aprobadosCount / alumnosConNota) * 100)}%` : '—';
 
     document.getElementById('statPromedio').textContent = promGeneral;
-    document.getElementById('statAprobados').textContent = `${porcAprobados}%`;
+    document.getElementById('statAprobados').textContent = porcAprobados;
   }
 
   function actualizarEstadisticasGenerales() {
@@ -540,11 +591,11 @@
       }
     });
 
-    const promFinal = alumnosConNota > 0 ? (sumaTotal / alumnosConNota).toFixed(2) : '-';
-    const porcAprobados = alumnosConNota > 0 ? Math.round((aprobados / alumnosConNota) * 100) : 100;
+    const promFinal = alumnosConNota > 0 ? (sumaTotal / alumnosConNota).toFixed(2) : '—';
+    const porcAprobados = alumnosConNota > 0 ? `${Math.round((aprobados / alumnosConNota) * 100)}%` : '—';
 
     document.getElementById('statPromedio').textContent = promFinal;
-    document.getElementById('statAprobados').textContent = `${porcAprobados}%`;
+    document.getElementById('statAprobados').textContent = porcAprobados;
   }
 
   // ── Edición interactiva de notas en tiempo real ────────────────────
@@ -561,7 +612,7 @@
       }
 
       if (!isNaN(val) && val >= 1 && val <= 10) {
-        alumnos[row][propCuatrimestre][col] = Math.round(val * 10) / 10;
+        alumnos[row][propCuatrimestre][col] = Math.round(val * 100) / 100;
         e.target.textContent = alumnos[row][propCuatrimestre][col].toFixed(2);
       } else if (rawText === '' || rawText === '-') {
         delete alumnos[row][propCuatrimestre][col];
@@ -571,7 +622,7 @@
         e.target.textContent = typeof previo === 'number' ? previo.toFixed(2) : '-';
       }
 
-      guardarDatos();
+      guardarDatosLocal();
 
       // Recalcular promedio de la fila para este cuatrimestre
       const evalCount = evalCounts[cuatrimestreActivo] || 3;
@@ -584,7 +635,8 @@
         }
       }
       const nuevoProm = count > 0 ? (sum / count).toFixed(2) : '-';
-      document.getElementById(`prom-${row}`).textContent = nuevoProm;
+      const elProm = document.getElementById(`prom-${row}`);
+      if (elProm) elProm.textContent = nuevoProm;
 
       actualizarEstadisticasGenerales();
     }
@@ -595,7 +647,7 @@
     const cur = evalCounts[cuatrimestreActivo] || 3;
     if (cur > MIN) {
       evalCounts[cuatrimestreActivo] = cur - 1;
-      guardarDatos();
+      guardarDatosLocal();
       renderTable();
     }
   };
@@ -604,34 +656,127 @@
     const cur = evalCounts[cuatrimestreActivo] || 3;
     if (cur < MAX) {
       evalCounts[cuatrimestreActivo] = cur + 1;
-      guardarDatos();
+      guardarDatosLocal();
       renderTable();
     }
   };
 
-  // Botones de cambio de cuatrimestre (1° Cuatrimestre y 2° Cuatrimestre)
+  // Botones de cambio de cuatrimestre
   document.getElementById('tabCuatrimestre1').addEventListener('click', () => cambiarCuatrimestre(1));
   document.getElementById('tabCuatrimestre2').addEventListener('click', () => cambiarCuatrimestre(2));
 
-  // Guardar Calificaciones
-  document.getElementById('btnGuardarNotas').onclick = () => {
-    guardarDatos();
-    alert(`¡Planilla de calificaciones del ${cuatrimestreActivo}° Cuatrimestre guardada con éxito!`);
+  // Guardar Calificaciones en TiDB Cloud
+  document.getElementById('btnGuardarNotas').onclick = async () => {
+    guardarDatosLocal();
+    const token = localStorage.getItem('token');
+    const cursoId = obtenerCursoIdActivo();
+    const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+
+    const calificaciones = [];
+    alumnos.forEach(al => {
+      // 1° Cuatrimestre
+      const c1 = al.cuatrimestre1 || [];
+      for (let i = 0; i < (evalCounts[1] || 3); i++) {
+        if (typeof c1[i] === 'number') {
+          calificaciones.push({
+            id_alumno: al.id,
+            periodo: `1° Cuatrimestre - Eval ${i + 1}`,
+            nota: c1[i]
+          });
+        }
+      }
+      // 2° Cuatrimestre
+      const c2 = al.cuatrimestre2 || [];
+      for (let i = 0; i < (evalCounts[2] || 3); i++) {
+        if (typeof c2[i] === 'number') {
+          calificaciones.push({
+            id_alumno: al.id,
+            periodo: `2° Cuatrimestre - Eval ${i + 1}`,
+            nota: c2[i]
+          });
+        }
+      }
+    });
+
+    if (token && calificaciones.length > 0) {
+      try {
+        const res = await fetch(`${API_BASE}/api/profesor/notas`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            id_curso: cursoId,
+            calificaciones
+          })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          alert('¡Calificaciones guardadas exitosamente en TiDB Cloud y disponibles para el alumno!');
+          return;
+        } else {
+          alert(data.mensaje || 'Error al guardar calificaciones en el servidor');
+        }
+      } catch (err) {
+        console.warn('[Notas] Error al guardar en TiDB:', err);
+      }
+    }
+    alert(`¡Planilla de calificaciones del ${cuatrimestreActivo}° Cuatrimestre guardada localmente!`);
   };
 
-  // Sincronizar contexto del curso activo
-  const curso = sessionStorage.getItem('cursoActivo') || localStorage.getItem('cursoActivo') || '4B';
-  const materia = sessionStorage.getItem('materiaActiva') || localStorage.getItem('materiaActiva') || 'Matemáticas';
-  const labelCurso = document.getElementById('labelCursoNotas');
-  if (labelCurso) labelCurso.textContent = `${curso} • ${materia}`;
-
-  async function sincronizarAlumnosBackend() {
-    const cursoParam = sessionStorage.getItem('cursoActivoId') || sessionStorage.getItem('cursoActivo') || curso || '4';
+  // Cargar calificaciones existentes desde TiDB
+  async function sincronizarNotasBackend(cursoParam) {
     const token = localStorage.getItem('token');
     if (!token) return;
 
+    const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
     try {
-      const res = await fetch(`/api/profesor/alumnos/${encodeURIComponent(cursoParam)}`, {
+      const res = await fetch(`${API_BASE}/api/profesor/notas/${encodeURIComponent(cursoParam)}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.notas) && data.notas.length > 0) {
+          data.notas.forEach(n => {
+            const al = alumnos.find(a => String(a.id) === String(n.id_alumno));
+            if (!al) return;
+            const periodoStr = (n.periodo || '').toLowerCase();
+            const val = parseFloat(n.nota);
+            if (isNaN(val)) return;
+
+            // Extraer índice de evaluación si existe ("Eval 1", "Eval 2")
+            const matchEval = periodoStr.match(/eval\s*(\d+)/i);
+            const evalIdx = matchEval ? Math.max(0, parseInt(matchEval[1], 10) - 1) : 0;
+
+            if (periodoStr.includes('2') || periodoStr.includes('segundo')) {
+              if (!al.cuatrimestre2) al.cuatrimestre2 = [];
+              al.cuatrimestre2[evalIdx] = val;
+              if (evalIdx >= (evalCounts[2] || 3)) evalCounts[2] = evalIdx + 1;
+            } else {
+              if (!al.cuatrimestre1) al.cuatrimestre1 = [];
+              al.cuatrimestre1[evalIdx] = val;
+              if (evalIdx >= (evalCounts[1] || 3)) evalCounts[1] = evalIdx + 1;
+            }
+          });
+          renderTable();
+          guardarDatosLocal();
+        }
+      }
+    } catch (e) {
+      console.warn('[Notas] Error al cargar notas de TiDB:', e);
+    }
+  }
+
+  // Sincronizar alumnos del curso seleccionado
+  async function sincronizarAlumnosBackend() {
+    const cursoParam = obtenerCursoIdActivo();
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const API_BASE = window.location.origin.startsWith('http') ? window.location.origin : 'http://localhost:3000';
+    try {
+      const res = await fetch(`${API_BASE}/api/profesor/alumnos/${encodeURIComponent(cursoParam)}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -650,7 +795,8 @@
             };
           });
           renderTable();
-          guardarDatos();
+          await sincronizarNotasBackend(cursoParam);
+          guardarDatosLocal();
         } else if (data.ok && data.alumnos && data.alumnos.length === 0) {
           alumnos = [];
           renderTable();
@@ -661,10 +807,24 @@
     }
   }
 
+  // Listener para cambio de curso en el selector
+  const selectCurso = document.getElementById('selectCursoNotas');
+  if (selectCurso) {
+    selectCurso.addEventListener('change', async () => {
+      const idSeleccionado = selectCurso.value;
+      sessionStorage.setItem('cursoActivoId', idSeleccionado);
+      localStorage.setItem('cursoActivoId', idSeleccionado);
+      await sincronizarAlumnosBackend();
+    });
+  }
+
   // Inicializar
-  cargarDatos();
+  cargarDatosLocal();
   renderTable();
-  sincronizarAlumnosBackend();
+  (async () => {
+    await cargarCursosDocente();
+    await sincronizarAlumnosBackend();
+  })();
 </script>
 </body>
 </html>

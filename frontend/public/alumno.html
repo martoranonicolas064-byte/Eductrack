@@ -973,7 +973,7 @@
         .progress-fill {
             background: #00c853;
             height: 100%;
-            width: 90%;
+            width: 0%;
             border-radius: 10px;
             transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -1480,7 +1480,7 @@
                     <div class="top-average-banner">
                         <div class="average-big-wrap">
                             <span class="label">Promedio General</span>
-                            <span id="overall-average" class="val">8.75</span>
+                            <span id="overall-average" class="val">—</span>
                         </div>
                         <div class="average-badge-box">
                             <span class="status-chip" id="overall-status-chip"><i class="fa-solid fa-certificate"></i> APROBADO</span>
@@ -1534,11 +1534,11 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
                         <div style="background: rgba(255,255,255,0.08); padding: 8px; border-radius: 8px;">
                             <span style="opacity: 0.8;">Materia más alta:</span><br>
-                            <b id="diag-top-subject" style="color: #00e600; font-size: 13px;">Historia (10.00)</b>
+                            <b id="diag-top-subject" style="color: #00e600; font-size: 13px;">—</b>
                         </div>
                         <div style="background: rgba(255,255,255,0.08); padding: 8px; border-radius: 8px;">
                             <span style="opacity: 0.8;">Materias Aprobadas:</span><br>
-                            <b id="diag-approved-count" style="color: #00d9ff; font-size: 13px;">8 de 8 (100%)</b>
+                            <b id="diag-approved-count" style="color: #00d9ff; font-size: 13px;">— de — (—%)</b>
                         </div>
                     </div>
                 </div>
@@ -1551,21 +1551,21 @@
                     
                     <div class="stats-grid">
                         <div class="stat-card">
-                            <div class="num stat-present" id="count-present">28</div>
+                            <div class="num stat-present" id="count-present">0</div>
                             <div class="label">Presentes</div>
                         </div>
                         <div class="stat-card">
-                            <div class="num stat-absent" id="count-absent">2</div>
+                            <div class="num stat-absent" id="count-absent">0</div>
                             <div class="label">Ausentes</div>
                         </div>
                         <div class="stat-card">
-                            <div class="num stat-late" id="count-late">1</div>
+                            <div class="num stat-late" id="count-late">0</div>
                             <div class="label">Tardanzas</div>
                         </div>
                     </div>
 
                     <div class="progress-bar-box">
-                        <h5 class="attendance-title" id="attendance-percentage">Porcentaje de Asistencia: 90%</h5>
+                        <h5 class="attendance-title" id="attendance-percentage">Porcentaje de Asistencia: 0%</h5>
                         <div class="progress-track">
                             <div class="progress-fill"></div>
                         </div>
@@ -1661,11 +1661,11 @@
                         <span style="color: #475569;" id="cert-legajo-alumno">Legajo: —</span><br>
                         <span style="color: #475569;" id="cert-curso-alumno">Curso: —</span>
                     </div>
-                    <p style="margin-bottom: 8px;">Reviste la condición de <b>ALUMNO REGULAR ACTIVO</b> en el Ciclo Lectivo <b>2026</b>, registrando una asistencia computada del <b>90.3%</b> y un promedio general acumulado de <b id="cert-promedio-alumno" style="color: #16a34a;">8.75</b>.</p>
+                    <p style="margin-bottom: 8px;">Reviste la condición de <b>ALUMNO REGULAR ACTIVO</b> en el Ciclo Lectivo <b>2026</b>, registrando una asistencia computada del <b id="cert-asistencia-pct">—%</b> y un promedio general acumulado de <b id="cert-promedio-alumno" style="color: #16a34a;">—</b>.</p>
                     <p style="font-size: 0.72rem; color: #64748b; margin-top: 12px; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
                         <i class="fa-solid fa-qrcode" style="font-size: 1.1rem; float: right; margin-left: 8px;"></i>
                         Firma Digital Autorizada: Dpto. de Gestión Escolar y Alumnado.<br>
-                        Código Verificador: EDTK-2026-REG-<span id="cert-hash-code">99482</span>
+                        Código Verificador: EDTK-2026-REG-<span id="cert-hash-code">—</span>
                     </p>
                 </div>
                 <div style="display: flex; gap: 8px; margin-top: 12px;">
@@ -1733,6 +1733,23 @@
                 });
             });
             return Object.values(materiasMap);
+        }
+
+        function armarLibretasPorPeriodo(grades) {
+            const c1Grades = [];
+            const c2Grades = [];
+            (grades || []).forEach(g => {
+                const p = (g.title || '').toLowerCase();
+                if (p.includes('2') || p.includes('segundo')) {
+                    c2Grades.push(g);
+                } else {
+                    c1Grades.push(g);
+                }
+            });
+            return {
+                c1: armarLibretaDesdeNotas(c1Grades),
+                c2: armarLibretaDesdeNotas(c2Grades)
+            };
         }
 
         function updateProfileUI() {
@@ -1812,7 +1829,7 @@
                             state.alumno = Object.assign(state.alumno, data.alumno);
                         }
                         state.grades = data.grades || [];
-                        state.libreta = { c1: armarLibretaDesdeNotas(state.grades), c2: [] };
+                        state.libreta = armarLibretasPorPeriodo(state.grades);
                         if (data.attendance) {
                             state.attendance = data.attendance;
                         }
@@ -1947,6 +1964,19 @@
             const certCurso = document.getElementById("cert-curso-alumno");
             if (certCurso) {
                 certCurso.textContent = `Curso: ${state.alumno.curso || '—'} — Turno ${state.alumno.turno || 'Mañana'}`;
+            }
+            // Asistencia en certificado
+            const certAsistPct = document.getElementById("cert-asistencia-pct");
+            if (certAsistPct) {
+                const total = state.attendance.present + state.attendance.absent + state.attendance.late;
+                const pct = total > 0 ? ((state.attendance.present / total) * 100).toFixed(1) : '0.0';
+                certAsistPct.textContent = pct + '%';
+            }
+            // Código verificador basado en ID real del alumno
+            const certHash = document.getElementById("cert-hash-code");
+            if (certHash) {
+                const idStr = String(state.alumno.id || Math.floor(Math.random() * 90000 + 10000));
+                certHash.textContent = idStr.padStart(5, '0');
             }
             modal.style.display = "flex";
             document.body.classList.add("modal-open");
@@ -2514,13 +2544,16 @@
                 dayEl.addEventListener("click", function () { selectDay(day); });
 
                 const hasMath = state.reminders.some(function (r) {
-                    return r.month === state.currentMonthIndex && r.day === day && r.category === "MATEMATICA";
+                    return r.month === (state.currentMonthIndex + 1) && r.day === day && r.category === "MATEMATICA";
                 });
                 const hasLang = state.reminders.some(function (r) {
-                    return r.month === state.currentMonthIndex && r.day === day && r.category === "LENGUA Y LITERATURA";
+                    return r.month === (state.currentMonthIndex + 1) && r.day === day && r.category === "LENGUA Y LITERATURA";
+                });
+                const hasOther = state.reminders.some(function (r) {
+                    return r.month === (state.currentMonthIndex + 1) && r.day === day && r.category !== "MATEMATICA" && r.category !== "LENGUA Y LITERATURA";
                 });
 
-                if (hasMath || hasLang) {
+                if (hasMath || hasLang || hasOther) {
                     const indDiv = document.createElement("div");
                     indDiv.className = "indicators";
                     if (hasMath) {
@@ -2531,6 +2564,11 @@
                     if (hasLang) {
                         const dot = document.createElement("div");
                         dot.className = "indicator ind-red";
+                        indDiv.appendChild(dot);
+                    }
+                    if (hasOther && !hasMath && !hasLang) {
+                        const dot = document.createElement("div");
+                        dot.className = "indicator ind-green";
                         indDiv.appendChild(dot);
                     }
                     dayEl.appendChild(indDiv);
@@ -2564,7 +2602,7 @@
             document.getElementById("selected-date-text").textContent = state.selectedDay + " " + monthAbbrev + " " + state.currentYear;
 
             const count = state.reminders.filter(function (r) {
-                return r.month === state.currentMonthIndex && r.day === state.selectedDay;
+                return r.month === (state.currentMonthIndex + 1) && r.day === state.selectedDay;
             }).length;
             document.getElementById("selected-events-count").textContent = count + (count === 1 ? " Tarea" : " Tareas");
         }

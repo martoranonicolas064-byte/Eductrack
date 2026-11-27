@@ -962,7 +962,10 @@
             document.getElementById('campo-nueva-materia').classList.add('hidden');
             document.getElementById('input-nueva-materia').value = '';
 
-            // Cargar docentes disponibles
+            // Cargar docentes disponibles asegurando que estén cargados desde TiDB
+            if (!db.profesores || db.profesores.length === 0) {
+                await cargarProfesores();
+            }
             const selProf = document.getElementById('select-docente-materia');
             if (db.profesores && db.profesores.length > 0) {
                 selProf.innerHTML = db.profesores.map(p => 

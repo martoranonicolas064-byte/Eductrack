@@ -754,8 +754,8 @@
 
     function actualizarPildoraContexto() {
       const ctx = obtenerContextoGuardado();
-      const curso = ctx.curso || '4B';
-      const materia = ctx.materia || 'Matemáticas';
+      const curso = ctx.curso || '—';
+      const materia = ctx.materia || '—';
       const label = document.getElementById('labelContextoActivo');
       const labelBar = document.getElementById('labelBarraContexto');
       if (label) label.textContent = `Curso: ${curso} • ${materia}`;
@@ -806,6 +806,18 @@
             if (data.cursos) {
               cursosData = data.cursos;
               renderizarCursosEnModal(cursosData);
+              if (cursosData.length > 0) {
+                const ctxActual = obtenerContextoGuardado();
+                const existe = cursosData.some(c => c.nombre === ctxActual.curso || (ctxActual.curso && c.nombre.includes(ctxActual.curso)));
+                if (!existe || !ctxActual.curso || ctxActual.curso === '—') {
+                  const primer = cursosData[0];
+                  const mat = primer.materias && primer.materias[0] ? primer.materias[0].nombre : 'General';
+                  guardarContexto(primer.nombre, mat, primer.id_curso);
+                }
+              } else {
+                guardarContexto('—', '—', null);
+              }
+              actualizarPildoraContexto();
             }
           }
         } else if (response.status === 401 || response.status === 403) {

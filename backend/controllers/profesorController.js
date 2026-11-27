@@ -54,12 +54,12 @@ const getDashboard = async (req, res) => {
         // Cursos y materias únicos agrupados para la selección del profesor
         const cursosMap = {};
         cursosMaterias.forEach(cm => {
-            const key = cm.curso_nombre || `Curso ${cm.id_curso}`;
+            const key = cm.id_curso;
             if (!cursosMap[key]) {
                 cursosMap[key] = {
                     id_curso: cm.id_curso,
-                    nombre: key,
-                    descripcion: cm.curso_nombre_completo || `Curso ${key}`,
+                    nombre: cm.curso_nombre || cm.curso_nombre_completo || `Curso ${cm.id_curso}`,
+                    descripcion: cm.curso_nombre_completo || `Curso ${cm.curso_nombre || cm.id_curso}`,
                     materias: []
                 };
             }
@@ -524,6 +524,117 @@ const eliminarRecordatorioProfesor = async (req, res) => {
     }
 };
 
+/**
+ * Obtener calificaciones registradas en TiDB Cloud para un curso y materia
+ */
+const getNotasPorCurso = async (req, res) => {
+    try {
+        const id_profesor = req.usuario.id;
+        let { id_curso } = req.params;
+        const { id_materia } = req.query;
+
+        id_curso = decodeURIComponent(id_curso || '').trim();
+
+        let queryAsig = `
+            SELECT a.id_asignacion, a.id_materia, m.nombre AS materia_nombre, a.id_curso
+            FROM asignacion a
+            JOIN curso c ON a.id_curso = c.id_curso
+            JOIN materia m ON a.id_materia = m.id_materia
+            WHERE a.id_profesor = ? AND (a.id_curso = ? OR CONCAT(c.año, c.division) = ? OR c.nombre = ?)
+        `;
+        let paramsAsig = [id_profesor, id_curso, id_curso, id_curso];
+        if (id_materia) {
+            queryAsig += ` AND a.id_materia = ?`;
+            paramsAsig.push(id_materia);
+        }
+
+        const [asigs] = await mysqlPool.query(queryAsig, paramsAsig);
+        if (asigs.length === 0) {
+            return res.json({ ok: true, notas: [] });
+        }
+
+        const idAsignaciones = asigs.map(a => a.id_asignacion);
+        const [notas] = await mysqlPool.query(
+            `SELECT n.id_nota, n.id_alumno, n.id_asignacion, n.periodo, CAST(n.nota AS DECIMAL(4,2)) as nota,
+                    al.nombre, al.apellido
+             FROM nota n
+             JOIN alumno al ON n.id_alumno = al.id_alumno
+             WHERE n.id_asignacion IN (?)`,
+            [idAsignaciones]
+        );
+
+        return res.json({
+            ok: true,
+            asignaciones: asigs,
+            notas
+        });
+    } catch (error) {
+        console.error('[ProfesorController] Error al obtener notas:', error);
+        return res.status(500).json({ ok: false, mensaje: 'Error al consultar notas', error: error.message });
+    }
+};
+
+/**
+ * Guardar o actualizar calificaciones en TiDB Cloud
+ */
+const guardarNotas = async (req, res) => {
+    try {
+        const id_profesor = req.usuario.id;
+        const { id_curso, id_materia, calificaciones } = req.body;
+
+        if (!id_curso || !Array.isArray(calificaciones) || calificaciones.length === 0) {
+            return res.status(400).json({ ok: false, mensaje: 'Datos insuficientes para guardar calificaciones' });
+        }
+
+        let [asigs] = await mysqlPool.query(
+            `SELECT a.id_asignacion 
+             FROM asignacion a
+             JOIN curso c ON a.id_curso = c.id_curso
+             WHERE a.id_profesor = ? AND (a.id_curso = ? OR CONCAT(c.año, c.division) = ? OR c.nombre = ?)
+             ${id_materia ? 'AND a.id_materia = ?' : ''}
+             LIMIT 1`,
+            id_materia ? [id_profesor, id_curso, id_curso, id_curso, id_materia] : [id_profesor, id_curso, id_curso, id_curso]
+        );
+
+        if (asigs.length === 0) {
+            return res.status(400).json({ ok: false, mensaje: 'No se encontró la asignación de materia/curso para este profesor' });
+        }
+        const id_asignacion = asigs[0].id_asignacion;
+
+        for (const c of calificaciones) {
+            const id_alumno = c.id_alumno || c.id;
+            const periodo = c.periodo || '1° cuatrimestre';
+            const notaVal = parseFloat(c.nota);
+            if (!id_alumno || isNaN(notaVal)) continue;
+
+            const [existente] = await mysqlPool.query(
+                `SELECT id_nota FROM nota WHERE id_alumno = ? AND id_asignacion = ? AND periodo = ?`,
+                [id_alumno, id_asignacion, periodo]
+            );
+
+            if (existente.length > 0) {
+                await mysqlPool.query(
+                    `UPDATE nota SET nota = ? WHERE id_nota = ?`,
+                    [notaVal, existente[0].id_nota]
+                );
+            } else {
+                await mysqlPool.query(
+                    `INSERT INTO nota (id_alumno, id_asignacion, periodo, nota) VALUES (?, ?, ?, ?)`,
+                    [id_alumno, id_asignacion, periodo, notaVal]
+                );
+            }
+        }
+
+        return res.json({
+            ok: true,
+            mensaje: 'Calificaciones guardadas exitosamente en TiDB Cloud'
+        });
+    } catch (error) {
+        console.error('[ProfesorController] Error al guardar calificaciones:', error);
+        return res.status(500).json({ ok: false, mensaje: 'Error al registrar calificaciones', error: error.message });
+    }
+};
+
 module.exports = {
     getDashboard,
     getAlumnosPorCurso,
@@ -532,5 +643,7 @@ module.exports = {
     programarReunion,
     getRecordatoriosProfesor,
     crearRecordatorioProfesor,
-    eliminarRecordatorioProfesor
+    eliminarRecordatorioProfesor,
+    getNotasPorCurso,
+    guardarNotas
 };

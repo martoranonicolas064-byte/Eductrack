@@ -84,17 +84,16 @@ router.post('/profesores', verificarAdmin, async (req, res) => {
 
         const idNuevoProfesor = result.insertId;
 
-        // Asignar al nuevo profesor materias del curso 1 (4B) para que tenga panel funcional de inmediato
-        try {
-            const [materias] = await pool.query('SELECT id_materia FROM materia LIMIT 3');
-            for (const m of materias) {
+        // Si se envió un curso y materia específicos en el cuerpo, asignarlo
+        if (req.body.id_curso && req.body.id_materia) {
+            try {
                 await pool.query(
-                    'INSERT INTO asignacion (id_profesor, id_materia, id_curso) VALUES (?, ?, 1)',
-                    [idNuevoProfesor, m.id_materia]
+                    'INSERT INTO asignacion (id_profesor, id_materia, id_curso) VALUES (?, ?, ?)',
+                    [idNuevoProfesor, req.body.id_materia, req.body.id_curso]
                 );
+            } catch (asigErr) {
+                console.warn('[AdminRoutes] Advertencia al crear asignación específica:', asigErr.message);
             }
-        } catch (asigErr) {
-            console.warn('[AdminRoutes] Advertencia al crear asignaciones iniciales del profesor:', asigErr.message);
         }
 
         res.json({
