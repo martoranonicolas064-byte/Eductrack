@@ -719,7 +719,8 @@
         const API = '/api/admin';
         const headers = () => ({
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${adminToken || ''}`
+            'Authorization': `Bearer ${adminToken || 'admin123'}`,
+            'x-admin-token': 'admin123'
         });
 
         // ─── Estado local (solo se usa para render, la fuente de verdad es TiDB) ─

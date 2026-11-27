@@ -53,7 +53,7 @@ const getDashboard = async (req, res) => {
             const [alumnosCount] = await mysqlPool.query(
                 'SELECT COUNT(*) AS total FROM alumno WHERE id_curso = 1'
             );
-            totalAlumnos = alumnosCount[0]?.total || 8;
+            totalAlumnos = alumnosCount[0]?.total !== undefined ? alumnosCount[0].total : 0;
 
             // Recordatorios pendientes
             const [recRows] = await mysqlPool.query(
