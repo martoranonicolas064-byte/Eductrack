@@ -137,7 +137,7 @@ app.get(['/alumno', '/alumno.html', '/estudiante', '/estudiantes'], noCachePriva
 app.get('/api/health', (req, res) => {
     res.json({
         ok: true,
-        version: '2026.11.26-v2',
+        version: '2026.11.27-v3-clean-live',
         mensaje: 'API de EduTrack funcionando correctamente'
     });
 });
