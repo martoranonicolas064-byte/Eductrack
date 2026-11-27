@@ -9,6 +9,7 @@ const { query: pgQuery } = require('./config/pgDb');
 const authRoutes = require('./routes/authRoutes');
 const alumnoRoutes = require('./routes/alumnoRoutes');
 const profesorRoutes = require('./routes/profesorRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const { syncInitialData } = require('./database/syncData');
 
 const app = express();
@@ -191,6 +192,7 @@ app.use('/api', noCachePrivate);
 app.use('/api/auth', authRoutes);
 app.use('/api/alumno', alumnoRoutes);
 app.use('/api/profesor', profesorRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Iniciar servidor y sincronizar datos
 app.listen(PORT, '0.0.0.0', async () => {

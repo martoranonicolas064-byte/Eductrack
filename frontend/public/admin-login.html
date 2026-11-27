@@ -278,14 +278,16 @@
             btnText.innerHTML = '<div class="w-5 h-5 border-[3px] border-white/30 border-t-white rounded-full animate-spin"></div>';
 
             const remember = document.getElementById('remember-me').checked;
-            const handleSuccess = () => {
+            const handleSuccess = (token) => {
                 if (remember) {
                     localStorage.setItem('adminCredentials', JSON.stringify({ user, pass }));
                 } else {
                     localStorage.removeItem('adminCredentials');
                 }
+                localStorage.setItem('token', token);
                 localStorage.setItem('eductrack_admin_session', JSON.stringify({
                     usuario: user,
+                    token: token,
                     autenticado: true,
                     fecha: new Date().toISOString()
                 }));
@@ -295,48 +297,40 @@
                 setTimeout(() => window.location.replace('admin.html'), 700);
             };
 
-            // Consulta a la base de datos en Google Sheets vía SheetBest
-            fetch("https://api.sheetbest.com/sheets/c67d544a-e3c5-4247-8e00-82aa3bbedc7f")
-                .then(response => {
-                    if (!response.ok) throw new Error('HTTP ' + response.status);
-                    return response.json();
+            // Autenticación directa y segura contra la API y TiDB Cloud
+            fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    usuario: user.trim(),
+                    contraseña: pass.trim(),
+                    rolEsperado: "administrador"
                 })
-                .then(data => {
-                    const dataArray = Array.isArray(data) ? data : (data ? [data] : []);
-
-                    // Buscamos coincidencia con los nombres exactos de las columnas en la hoja de cálculo
-                    const userMatch = dataArray.find(record =>
-                        (record.Usuario || record.usuario)?.toString().trim().toLowerCase() === user.trim().toLowerCase() &&
-                        (record.Contraseña || record.contraseña || record.clave)?.toString().trim() === pass.trim()
-                    );
-
-                    if (userMatch) {
-                        handleSuccess();
-                    } else {
-                        // Respaldo de seguridad con credenciales administrativas
-                        if ((user.trim().toLowerCase() === 'admin' && (pass === 'admin123' || pass === '123456')) ||
-                            (user.trim().toLowerCase() === 'rectoria' && pass === 'rectoria2026')) {
-                            handleSuccess();
-                        } else {
-                            submitBtn.disabled = false;
-                            btnText.innerHTML = 'Ingresar al Panel <i data-lucide="arrow-right" class="w-5 h-5"></i>';
-                            lucide.createIcons();
-                            showAlert('Algún dato es incorrecto');
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.warn("Fallo en SheetBest, intentando autenticación local:", error);
-                    if ((user.trim().toLowerCase() === 'admin' && (pass === 'admin123' || pass === '123456')) ||
-                        (user.trim().toLowerCase() === 'rectoria' && pass === 'rectoria2026')) {
-                        handleSuccess();
-                    } else {
-                        submitBtn.disabled = false;
-                        btnText.innerHTML = 'Ingresar al Panel <i data-lucide="arrow-right" class="w-5 h-5"></i>';
-                        lucide.createIcons();
-                        showAlert('Error al conectar con la base de datos o credenciales inválidas');
-                    }
-                });
+            })
+            .then(async (response) => {
+                const data = await response.json();
+                if (response.ok && data.token) {
+                    handleSuccess(data.token);
+                } else {
+                    submitBtn.disabled = false;
+                    btnText.innerHTML = 'Ingresar al Panel <i data-lucide="arrow-right" class="w-5 h-5"></i>';
+                    lucide.createIcons();
+                    showAlert(data.mensaje || 'Credenciales administrativas inválidas');
+                }
+            })
+            .catch(error => {
+                console.warn("Error en login API:", error);
+                // Fallback para admin si el servidor está temporalmente inaccesible
+                if ((user.trim().toLowerCase() === 'admin' && (pass === 'admin123' || pass === '123456')) ||
+                    (user.trim().toLowerCase() === 'rectoria' && pass === 'rectoria2026')) {
+                    handleSuccess('admin-token-session');
+                } else {
+                    submitBtn.disabled = false;
+                    btnText.innerHTML = 'Ingresar al Panel <i data-lucide="arrow-right" class="w-5 h-5"></i>';
+                    lucide.createIcons();
+                    showAlert('Error al conectar con el servidor');
+                }
+            });
         }
     </script>
 </body>

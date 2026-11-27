@@ -239,6 +239,10 @@
                 </button>
             </nav>
             <div class="p-4 border-t border-red-900/30 mt-auto space-y-2">
+                <button onclick="abrirModalReset()"
+                    class="w-full py-2 bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-300 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-2 border border-yellow-500/30">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Reiniciar Base de Datos
+                </button>
                 <button onclick="cerrarSesionAdmin()"
                     class="w-full py-2.5 bg-red-500/10 hover:bg-red-500/25 text-red-300 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 border border-red-500/20">
                     <i data-lucide="log-out" class="w-4 h-4"></i> Cerrar Sesión
@@ -384,8 +388,11 @@
                         <i data-lucide="user-plus" class="w-4 h-4"></i> Nuevo Docente
                     </button>
                 </header>
-                <div class="bg-[#2a0a0a] rounded-xl border border-red-900/20 overflow-hidden">
-                    <table class="w-full text-sm text-left">
+                <p class="text-[11px] text-red-300/80 mb-2 md:hidden flex items-center gap-1.5 font-medium">
+                    <i data-lucide="move-horizontal" class="w-4 h-4 text-red-400"></i> Deslizá hacia la derecha para ver Usuario y Contraseña
+                </p>
+                <div class="bg-[#2a0a0a] rounded-xl border border-red-900/20 overflow-x-auto shadow-md">
+                    <table class="w-full text-sm text-left min-w-[580px]">
                         <thead class="bg-[#3a0808] text-gray-400 text-[10px] uppercase tracking-widest font-bold">
                             <tr>
                                 <th class="p-4">Nombre Completo</th>
@@ -419,8 +426,11 @@
                         <i data-lucide="user-plus" class="w-5 h-5 text-emerald-400"></i> Añadir Alumno
                     </button>
                 </div>
-                <div class="bg-[#2a0a0a] rounded-xl border border-red-900/20 overflow-hidden">
-                    <table class="w-full text-sm text-left">
+                <p class="text-[11px] text-red-300/80 mb-2 md:hidden flex items-center gap-1.5 font-medium">
+                    <i data-lucide="move-horizontal" class="w-4 h-4 text-red-400"></i> Deslizá hacia la derecha para ver Usuario y Contraseña
+                </p>
+                <div class="bg-[#2a0a0a] rounded-xl border border-red-900/20 overflow-x-auto shadow-md">
+                    <table class="w-full text-sm text-left min-w-[650px]">
                         <thead class="bg-[#3a0808] text-gray-400 text-[10px] uppercase tracking-widest font-bold">
                             <tr>
                                 <th class="p-4">Nombre Completo</th>
@@ -470,52 +480,174 @@
     <div id="modal-alumno"
         class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
         <div class="bg-[#2a0a0a] border border-red-900/30 p-6 rounded-2xl w-full max-w-sm mx-4">
-            <h3 class="text-lg font-bold text-white mb-4">Añadir Alumno</h3>
-            <div class="mb-4">
-                <label class="block text-xs text-gray-400 uppercase font-bold mb-2">Curso Asignado</label>
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="user-plus" class="w-5 h-5 text-emerald-400"></i> Añadir Alumno</h3>
+            <div class="mb-3">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Curso Asignado</label>
                 <select id="alumno-curso"
                     class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
                 </select>
             </div>
-            <div class="mb-4">
-                <label class="block text-xs text-gray-400 uppercase font-bold mb-2">Nombre</label>
-                <input type="text" id="alumno-name"
+            <div class="mb-3">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Nombre</label>
+                <input type="text" id="alumno-name" placeholder="Ej: Agustín"
                     class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
             </div>
-            <div class="mb-4">
-                <label class="block text-xs text-gray-400 uppercase font-bold mb-2">Apellido</label>
-                <input type="text" id="alumno-surname"
+            <div class="mb-3">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Apellido</label>
+                <input type="text" id="alumno-surname" placeholder="Ej: Morales"
                     class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
+            </div>
+            <div class="mb-3">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Usuario (opcional)</label>
+                <input type="text" id="alumno-usuario" placeholder="Ej: amorales (se autogenera si vacío)"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500 font-mono text-xs">
+            </div>
+            <div class="mb-4">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Contraseña</label>
+                <input type="text" id="alumno-pass" placeholder="Ej: 123456" value="123456"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500 font-mono text-xs">
             </div>
             <div class="flex justify-end gap-2 mt-6">
                 <button onclick="closeModal('modal-alumno')"
                     class="px-4 py-2 text-gray-400 hover:text-white text-sm">Cancelar</button>
                 <button onclick="guardarAlumno()"
-                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-bold shadow-lg shadow-emerald-900/40">Añadir</button>
+                    class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-bold shadow-lg shadow-emerald-900/40">Guardar</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal Profesor -->
+    <!-- Modal Editar Alumno -->
+    <div id="modal-editar-alumno"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
+        <div class="bg-[#2a0a0a] border border-red-900/30 p-6 rounded-2xl w-full max-w-sm mx-4">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="pencil" class="w-5 h-5 text-blue-400"></i> Editar Estudiante</h3>
+            <input type="hidden" id="edit-alumno-id">
+            <div class="mb-3">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Curso Asignado</label>
+                <select id="edit-alumno-curso"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Nombre</label>
+                <input type="text" id="edit-alumno-nombre"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
+            </div>
+            <div class="mb-3">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Apellido</label>
+                <input type="text" id="edit-alumno-apellido"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
+            </div>
+            <div class="mb-3">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Usuario</label>
+                <input type="text" id="edit-alumno-usuario"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500 font-mono text-xs">
+            </div>
+            <div class="mb-4">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Contraseña</label>
+                <input type="text" id="edit-alumno-pass"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500 font-mono text-xs">
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="closeModal('modal-editar-alumno')"
+                    class="px-4 py-2 text-gray-400 hover:text-white text-sm">Cancelar</button>
+                <button onclick="guardarEdicionAlumno()"
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-bold shadow-lg shadow-blue-900/40">Actualizar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nuevo Profesor -->
     <div id="modal-profe"
         class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
         <div class="bg-[#2a0a0a] border border-red-900/30 p-6 rounded-2xl w-full max-w-sm mx-4">
-            <h3 class="text-lg font-bold text-white mb-4">Crear Profesor</h3>
-            <div class="mb-4">
-                <label class="block text-xs text-gray-400 uppercase font-bold mb-2">Nombre</label>
-                <input type="text" id="profe-nombre"
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="user-plus" class="w-5 h-5 text-red-400"></i> Crear Profesor</h3>
+            <div class="mb-3">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Nombre</label>
+                <input type="text" id="profe-nombre" placeholder="Ej: Carlos"
                     class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
             </div>
-            <div class="mb-4">
-                <label class="block text-xs text-gray-400 uppercase font-bold mb-2">Apellido</label>
-                <input type="text" id="profe-apellido"
+            <div class="mb-3">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Apellido</label>
+                <input type="text" id="profe-apellido" placeholder="Ej: Gómez"
                     class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
+            </div>
+            <div class="mb-3">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Usuario (opcional)</label>
+                <input type="text" id="profe-usuario" placeholder="Ej: profesor o carlos.gomez"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500 font-mono text-xs">
+            </div>
+            <div class="mb-4">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Contraseña</label>
+                <input type="text" id="profe-pass" placeholder="Ej: 123456" value="123456"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500 font-mono text-xs">
             </div>
             <div class="flex justify-end gap-2 mt-6">
                 <button onclick="closeModal('modal-profe')"
                     class="px-4 py-2 text-gray-400 hover:text-white text-sm">Cancelar</button>
                 <button onclick="guardarProfe()"
                     class="px-4 py-2 bg-red-700 hover:bg-red-600 text-white rounded-lg text-sm font-bold shadow-lg shadow-red-900/40">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Profesor -->
+    <div id="modal-editar-profe"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
+        <div class="bg-[#2a0a0a] border border-red-900/30 p-6 rounded-2xl w-full max-w-sm mx-4">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="pencil" class="w-5 h-5 text-blue-400"></i> Editar Docente</h3>
+            <input type="hidden" id="edit-profe-id">
+            <div class="mb-3">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Nombre</label>
+                <input type="text" id="edit-profe-nombre"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
+            </div>
+            <div class="mb-3">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Apellido</label>
+                <input type="text" id="edit-profe-apellido"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500">
+            </div>
+            <div class="mb-3">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Usuario</label>
+                <input type="text" id="edit-profe-usuario"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500 font-mono text-xs">
+            </div>
+            <div class="mb-4">
+                <label class="block text-xs text-gray-400 uppercase font-bold mb-1">Contraseña</label>
+                <input type="text" id="edit-profe-pass"
+                    class="w-full bg-[#1a0505] border border-red-900/40 text-white rounded-lg px-3 py-2 outline-none focus:border-red-500 font-mono text-xs">
+            </div>
+            <div class="flex justify-end gap-2 mt-6">
+                <button onclick="closeModal('modal-editar-profe')"
+                    class="px-4 py-2 text-gray-400 hover:text-white text-sm">Cancelar</button>
+                <button onclick="guardarEdicionProfe()"
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-bold shadow-lg shadow-blue-900/40">Actualizar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Reset Sistema -->
+    <div id="modal-reset"
+        class="fixed inset-0 bg-black/85 backdrop-blur-sm z-[100] hidden flex items-center justify-center">
+        <div class="bg-[#2a0a0a] border border-red-600/50 p-6 rounded-2xl w-full max-w-md mx-4 shadow-2xl shadow-red-950">
+            <div class="w-12 h-12 rounded-xl bg-red-900/40 border border-red-500/50 flex items-center justify-center mb-4 text-red-400">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">¿Reiniciar Base de Datos?</h3>
+            <p class="text-sm text-gray-300 mb-4 leading-relaxed">
+                Esta acción eliminará todos los alumnos y profesores de prueba en <strong>TiDB Cloud</strong> para que puedas cargar tus <strong>datos reales</strong> desde cero.
+            </p>
+            <div class="bg-red-950/60 border border-red-800/40 rounded-xl p-3 mb-6 text-xs text-red-200">
+                ✓ Se mantendrán los cursos (1A a 4B) y materias.<br>
+                ✓ Podrás seguir ingresando como <strong>admin</strong> / <strong>admin123</strong>.
+            </div>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeModal('modal-reset')"
+                    class="px-4 py-2 text-gray-400 hover:text-white text-sm">Cancelar</button>
+                <button id="btn-confirm-reset" onclick="ejecutarResetBD()"
+                    class="px-5 py-2.5 bg-red-700 hover:bg-red-600 text-white rounded-lg text-sm font-bold shadow-lg shadow-red-900/50 transition">
+                    Sí, limpiar y reiniciar
+                </button>
             </div>
         </div>
     </div>
@@ -567,57 +699,33 @@
     </div>
 
     <script>
-        // Base de datos local inicial (semilla de respaldo)
-        const defaultSeed = {
-            cursos: [
-                { id: '1', name: '4° B - Mañana', año: '4', division: 'B', turno: 'Mañana' },
-                { id: '2', name: '3° A - Tarde', año: '3', division: 'A', turno: 'Tarde' },
-                { id: '3', name: '2° A - Mañana', año: '2', division: 'A', turno: 'Mañana' }
-            ],
-            alumnos: [
-                { id: '1', name: 'Agustín Morales', username: 'amorales', password: '123456', cursoId: '1' },
-                { id: '2', name: 'Camila Fernández', username: 'cfernandez', password: '123456', cursoId: '1' },
-                { id: '3', name: 'Diego Reyes', username: 'dreyes', password: '123456', cursoId: '1' },
-                { id: '4', name: 'Ignacia Silva', username: 'isilva', password: '123456', cursoId: '1' },
-                { id: '5', name: 'Matías Castillo', username: 'mcastillo', password: '123456', cursoId: '1' },
-                { id: '6', name: 'Lucas Fernández', username: 'lucas_fernandez', password: '123456', cursoId: '1' }
-            ],
-            profesores: [
-                { id: '1', name: 'Carlos Gómez', username: 'profesor', password: '123456' },
-                { id: '2', name: 'Juan Pérez', username: 'profesor1', password: '123456' },
-                { id: '3', name: 'Laura Rossi', username: 'lrossi', password: '123456' }
-            ],
-            asignaciones: [
-                { id: '1', cursoId: '1', materia: 'Matemáticas', profeId: '2' },
-                { id: '2', cursoId: '1', materia: 'Historia', profeId: '2' },
-                { id: '3', cursoId: '1', materia: 'Base de datos', profeId: '2' }
-            ]
-        };
+        // ══════════════════════════════════════════════════════════════════════
+        //  EDUCTRACK — Panel de Administración
+        //  Conexión real a TiDB Cloud vía API REST del backend
+        // ══════════════════════════════════════════════════════════════════════
 
-        let db = JSON.parse(localStorage.getItem('adminDB'));
-        if (!db || !db.cursos || db.cursos.length === 0) {
-            db = defaultSeed;
-            localStorage.setItem('adminDB', JSON.stringify(db));
-        } else {
-            // Asegurar que las contraseñas no queden guardadas como '••••••'
-            if (Array.isArray(db.alumnos)) {
-                db.alumnos.forEach(a => {
-                    if (!a.password || a.password === '••••••') a.password = '123456';
-                });
+        // Token del admin (guardado en login)
+        let adminToken = localStorage.getItem('token');
+        if (!adminToken) {
+            const adminSession = localStorage.getItem('eductrack_admin_session');
+            try {
+                const parsed = JSON.parse(adminSession);
+                adminToken = parsed ? (parsed.token || parsed) : null;
+            } catch(e) {
+                adminToken = adminSession;
             }
-            if (Array.isArray(db.profesores)) {
-                db.profesores.forEach(p => {
-                    if (!p.password || p.password === '••••••') p.password = '123456';
-                });
-            }
-            localStorage.setItem('adminDB', JSON.stringify(db));
         }
 
-        function saveDB() {
-            localStorage.setItem('adminDB', JSON.stringify(db));
-            updateDashboard();
-        }
+        const API = '/api/admin';
+        const headers = () => ({
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken || ''}`
+        });
 
+        // ─── Estado local (solo se usa para render, la fuente de verdad es TiDB) ─
+        let db = { profesores: [], alumnos: [], cursos: [] };
+
+        // ─── UTILIDADES ───────────────────────────────────────────────────────
         function cerrarSesionAdmin() {
             if (typeof window.cerrarSesionSegura === 'function') {
                 window.cerrarSesionSegura('admin-login.html');
@@ -650,12 +758,9 @@
             const navBtn = document.querySelector(`.nav-item[data-section="${id}"]`);
             if (navBtn) navBtn.classList.add('active');
 
-            if (id === 'cursos') {
-                cerrarDetalleCurso();
-                renderCursosGrid();
-            }
-            if (id === 'profesores') renderProfesores();
-            if (id === 'alumnos') renderAlumnos();
+            if (id === 'cursos') { cerrarDetalleCurso(); renderCursosGrid(); }
+            if (id === 'profesores') cargarProfesores();
+            if (id === 'alumnos') cargarAlumnos();
             if (id === 'dashboard') updateDashboard();
         }
 
@@ -664,123 +769,89 @@
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
 
         function updateDashboard() {
-            document.getElementById('stat-cursos').textContent = db.cursos ? db.cursos.length : 0;
-            document.getElementById('stat-alumnos').textContent = db.alumnos ? db.alumnos.length : 0;
-            document.getElementById('stat-profes').textContent = db.profesores ? db.profesores.length : 0;
+            document.getElementById('stat-cursos').textContent = db.cursos.length;
+            document.getElementById('stat-alumnos').textContent = db.alumnos.length;
+            document.getElementById('stat-profes').textContent = db.profesores.length;
         }
 
-        /* CURSOS GRID */
+        function showToast(msg, tipo = 'ok') {
+            let t = document.getElementById('admin-toast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'admin-toast';
+                t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;padding:12px 24px;border-radius:12px;font-weight:700;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,0.5);transition:opacity 0.3s;';
+                document.body.appendChild(t);
+            }
+            t.textContent = msg;
+            t.style.background = tipo === 'ok' ? '#12b45a' : '#b01c1c';
+            t.style.color = '#fff';
+            t.style.opacity = '1';
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => { t.style.opacity = '0'; }, 3000);
+        }
+
+        // Toggle visibilidad de contraseña
+        function toggleVisibility(btn) {
+            const span = btn.previousElementSibling;
+            if (!span) return;
+            const pwd = span.dataset.password || '•••••';
+            const isHidden = span.textContent === '••••••';
+            span.textContent = isHidden ? pwd : '••••••';
+            span.style.letterSpacing = isHidden ? 'normal' : '0.2em';
+            span.classList.toggle('text-white', isHidden);
+            span.classList.toggle('text-gray-400', !isHidden);
+            const iconSize = btn.closest('td')?.classList.contains('p-3') ? 'w-3 h-3' : 'w-4 h-4';
+            btn.innerHTML = `<i data-lucide="${isHidden ? 'eye-off' : 'eye'}" class="${iconSize}"></i>`;
+            lucide.createIcons();
+        }
+
+        // ─── CURSOS (solo visualización desde TiDB) ───────────────────────────
+        async function cargarCursos() {
+            try {
+                const r = await fetch(`${API}/cursos`, { headers: headers() });
+                if (r.ok) {
+                    const data = await r.json();
+                    db.cursos = (data.cursos || []).map(c => ({
+                        id: String(c.id_curso),
+                        name: c.nombre || `${c.año}° ${c.division}`,
+                        año: String(c.año || ''),
+                        division: c.division || '',
+                        turno: c.turno || ''
+                    }));
+                }
+            } catch(e) {
+                console.warn('No se pudieron cargar cursos:', e);
+                db.cursos = [{ id: '1', name: '4° Año B', año: '4', division: 'B', turno: 'Mañana' }];
+            }
+        }
+
         function renderCursosGrid() {
             const grid = document.getElementById('cursos-grid');
             if (!grid) return;
             if (!db.cursos || db.cursos.length === 0) {
-                grid.innerHTML = `<div class="col-span-full p-8 text-center text-gray-500 italic border border-dashed border-red-900/30 rounded-xl">No hay cursos creados. Comienza creando uno.</div>`;
+                grid.innerHTML = `<div class="col-span-full p-8 text-center text-gray-500 italic border border-dashed border-red-900/30 rounded-xl">No hay cursos en la base de datos.</div>`;
                 return;
             }
             grid.innerHTML = db.cursos.map(c => {
-                const numAlumnos = (db.alumnos || []).filter(a => a.cursoId === c.id).length;
-                const numMaterias = (db.asignaciones || []).filter(a => a.cursoId === c.id).length;
+                const numAlumnos = db.alumnos.filter(a => String(a.id_curso) === c.id || String(a.cursoId) === c.id).length;
                 return `
                 <div class="bg-[#2a0a0a] border border-red-900/20 rounded-xl p-5 hover:border-red-500/60 hover:-translate-y-1 transition-all cursor-pointer group shadow-lg" onclick="abrirDetalleCurso('${c.id}')">
                     <div class="flex justify-between items-start mb-4">
                         <div class="p-3 bg-red-900/30 rounded-lg group-hover:bg-red-700 transition"><i data-lucide="presentation" class="w-6 h-6 text-red-300 group-hover:text-white"></i></div>
-                        <button onclick="event.stopPropagation(); eliminarCurso('${c.id}')" class="text-red-400/50 hover:text-red-400 p-1" title="Eliminar Curso"><i data-lucide="trash" class="w-4 h-4"></i></button>
                     </div>
                     <h3 class="text-2xl font-bold text-white mb-2">${c.name}</h3>
                     <div class="flex gap-4 text-xs font-medium text-gray-400">
                         <span class="flex items-center gap-1"><i data-lucide="users" class="w-3 h-3 text-emerald-400"></i> ${numAlumnos} Alumnos</span>
-                        <span class="flex items-center gap-1"><i data-lucide="book" class="w-3 h-3 text-red-300"></i> ${numMaterias} Materias</span>
                     </div>
-                </div>
-            `}).join('');
+                </div>`;
+            }).join('');
             lucide.createIcons();
         }
 
-        function openModalCurso() {
-            document.getElementById('curso-anio').value = '';
-            document.getElementById('curso-division').value = '';
-            document.getElementById('curso-turno').value = '';
-            openModal('modal-curso');
-        }
+        function openModalCurso() { alert('Los cursos se gestionan directamente en la base de datos. Contactá al administrador técnico.'); }
+        async function guardarCurso() {}
 
-        async function guardarCurso() {
-            const anio = document.getElementById('curso-anio').value.trim();
-            const division = document.getElementById('curso-division').value.trim();
-            const turno = document.getElementById('curso-turno').value.trim();
-
-            if (!anio || !division || !turno) {
-                alert("Por favor completa todos los campos");
-                return;
-            }
-
-            const btn = document.querySelector("#modal-curso button[onclick='guardarCurso()']");
-            const originalText = btn.textContent;
-            btn.textContent = "Guardando...";
-            btn.disabled = true;
-
-            try {
-                let nextId = Date.now().toString();
-                try {
-                    const getResponse = await fetch("https://api.sheetbest.com/sheets/b9647b39-eefd-4f1a-a379-50203e464f35");
-                    if (getResponse.ok) {
-                        const currentData = await getResponse.json();
-                        if (currentData && currentData.length > 0) {
-                            const ids = currentData.map(r => parseInt(r.Id_curso)).filter(id => !isNaN(id));
-                            if (ids.length > 0) nextId = (Math.max(...ids) + 1).toString();
-                        }
-                    }
-                } catch(e) {}
-
-                const cursoData = {
-                    Id_curso: nextId,
-                    Año: anio,
-                    Division: division,
-                    Turno: turno
-                };
-
-                // Guardado remoto en SheetBest
-                try {
-                    await fetch("https://api.sheetbest.com/sheets/b9647b39-eefd-4f1a-a379-50203e464f35", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(cursoData)
-                    });
-                } catch(e) {
-                    console.warn("SheetBest no accesible, guardando en respaldo local:", e);
-                }
-
-                db.cursos.push({ id: nextId.toString(), name: `${anio} ${division} - ${turno}`, año: anio, division, turno });
-                saveDB();
-                renderCursosGrid();
-                closeModal('modal-curso');
-            } catch (error) {
-                console.error(error);
-                alert("Error al procesar el curso");
-            } finally {
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }
-        }
-
-        async function eliminarCurso(id) {
-            if (confirm('¿Eliminar curso? Se perderán las asignaciones y alumnos vinculados.')) {
-                try {
-                    fetch(`https://api.sheetbest.com/sheets/b9647b39-eefd-4f1a-a379-50203e464f35/Id_curso/${id}`, {
-                        method: "DELETE"
-                    }).catch(err => console.warn(err));
-
-                    db.cursos = db.cursos.filter(c => c.id !== id);
-                    db.alumnos = db.alumnos.filter(a => a.cursoId !== id);
-                    db.asignaciones = db.asignaciones.filter(a => a.cursoId !== id);
-                    saveDB();
-                    renderCursosGrid();
-                } catch (error) {
-                    console.error(error);
-                }
-            }
-        }
-
-        /* DETALLE DE CURSO */
+        // ─── DETALLE DE CURSO ─────────────────────────────────────────────────
         let selectedCurso = null;
 
         function abrirDetalleCurso(id) {
@@ -800,333 +871,191 @@
             renderCursosGrid();
         }
 
-        /* ALUMNOS DENTRO DEL CURSO */
         function renderAlumnosCurso() {
             const tbody = document.getElementById('alumnos-curso-tbody');
             if (!tbody || !selectedCurso) return;
-            const alumnos = (db.alumnos || []).filter(a => a.cursoId === selectedCurso.id);
+            const alumnos = db.alumnos.filter(a => String(a.id_curso) === selectedCurso.id || String(a.cursoId) === selectedCurso.id);
             if (alumnos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500 italic border-b border-red-900/10">No hay alumnos cargados en este curso.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500 italic border-b border-red-900/10">No hay alumnos en este curso.</td></tr>`;
                 return;
             }
             tbody.innerHTML = alumnos.map(a => `
                 <tr class="hover:bg-red-900/10">
-                    <td class="p-3 font-bold text-white">${a.name}</td>
-                    <td class="p-3">
-                        <span class="text-red-300 block font-mono text-xs">${a.username}</span>
-                        <span class="text-gray-400 text-[10px] flex items-center gap-1 font-mono">Pass: <span data-password="${a.password || '123456'}">••••••</span> <button onclick="toggleVisibility(this)" class="text-gray-400 hover:text-white transition-colors" title="Mostrar contraseña"><i data-lucide="eye" class="w-3 h-3"></i></button></span>
+                    <td class="p-3 font-bold text-white whitespace-nowrap">${a.nombre} ${a.apellido}</td>
+                    <td class="p-3 whitespace-nowrap">
+                        <span class="text-red-300 block font-mono text-xs">${a.usuario}</span>
+                        <span class="text-gray-400 text-[10px] flex items-center gap-1 font-mono">Pass: <span data-password="${a.contraseña || a.contrasena || a.password || '•••'}">••••••</span> <button onclick="toggleVisibility(this)" class="text-gray-400 hover:text-white transition-colors" title="Ver contraseña"><i data-lucide="eye" class="w-3 h-3"></i></button></span>
                     </td>
-                    <td class="p-3 text-right flex gap-2 justify-end">
-                        <button onclick="verPerfilAlumno('${a.id}')" class="text-red-300 hover:text-white p-1" title="Ver Perfil"><i data-lucide="external-link" class="w-4 h-4"></i></button>
-                        <button onclick="eliminarAlumno('${a.id}')" class="text-red-400 hover:text-red-300 p-1" title="Eliminar"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                    <td class="p-3 text-right flex gap-2 justify-end whitespace-nowrap">
+                        <button onclick="abrirModalEditarAlumno(${a.id_alumno})" class="text-blue-300 hover:text-white p-1" title="Editar Usuario/Pass"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                        <button onclick="eliminarAlumnoReal(${a.id_alumno})" class="text-red-400 hover:text-red-300 p-1" title="Eliminar"><i data-lucide="trash" class="w-4 h-4"></i></button>
                     </td>
                 </tr>
             `).join('');
             lucide.createIcons();
         }
 
-        function abrirModalAlumno() {
-            document.getElementById('alumno-name').value = '';
-            document.getElementById('alumno-surname').value = '';
-            const select = document.getElementById('alumno-curso');
-            if (select) {
-                select.innerHTML = (db.cursos || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-                if (selectedCurso && selectedCurso.id) {
-                    select.value = selectedCurso.id;
-                }
-            }
-            openModal('modal-alumno');
-        }
-
-        async function guardarAlumno() {
-            let nombre = document.getElementById('alumno-name').value.trim();
-            let apellido = document.getElementById('alumno-surname').value.trim();
-            let cursoIdSeleccionado = document.getElementById('alumno-curso') ? document.getElementById('alumno-curso').value : null;
-            if (!nombre || !apellido || !cursoIdSeleccionado) return;
-
-            const btn = document.querySelector("#modal-alumno button[onclick='guardarAlumno()']");
-            const originalText = btn.textContent;
-            btn.textContent = "Añadiendo...";
-            btn.disabled = true;
-
-            try {
-                let nextId = Date.now().toString();
-                try {
-                    const getResponse = await fetch("https://api.sheetbest.com/sheets/6464d1a7-1907-42c5-b871-4ae6f1ba8e85");
-                    if (getResponse.ok) {
-                        const currentData = await getResponse.json();
-                        const dataArray = Array.isArray(currentData) ? currentData : (currentData ? [currentData] : []);
-                        if (dataArray.length > 0) {
-                            const ids = dataArray.map(r => r && r.Id_alumno ? parseInt(r.Id_alumno) : 0).filter(id => !isNaN(id));
-                            if (ids.length > 0) nextId = (Math.max(...ids) + 1).toString();
-                        }
-                    }
-                } catch(e) {}
-
-                const capitalize = (str) => str.split(' ').map(w => w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : '').join(' ');
-                nombre = capitalize(nombre);
-                apellido = capitalize(apellido);
-
-                const name = `${nombre} ${apellido}`;
-                const username = `${nombre.toLowerCase()}.${apellido.toLowerCase()}`;
-                const password = Math.random().toString(36).slice(-6);
-
-                const idCurso = parseInt(cursoIdSeleccionado) || 1;
-                const nuevoAlumnoLocal = { id: nextId.toString(), name, username, password, cursoId: idCurso.toString() };
-
-                const payloadSheet = {
-                    Id_alumno: nextId,
-                    Nombre: nombre,
-                    Apellido: apellido,
-                    Usuario: username,
-                    Contraseña: password,
-                    Id_curso: idCurso
-                };
-
-                try {
-                    await fetch("https://api.sheetbest.com/sheets/6464d1a7-1907-42c5-b871-4ae6f1ba8e85", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payloadSheet)
-                    });
-                } catch(e) {
-                    console.warn("SheetBest error, guardado local:", e);
-                }
-
-                db.alumnos.push(nuevoAlumnoLocal);
-                saveDB();
-                if (selectedCurso) renderAlumnosCurso();
-                renderAlumnos();
-                closeModal('modal-alumno');
-            } catch (error) {
-                console.error(error);
-                alert("Error de conexión al procesar el alumno");
-            } finally {
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }
-        }
-
-        function eliminarAlumno(id) {
-            if (confirm('¿Eliminar alumno?')) {
-                db.alumnos = (db.alumnos || []).filter(a => a.id !== id);
-                saveDB();
-                if (selectedCurso) renderAlumnosCurso();
-                renderAlumnos();
-            }
-        }
-
-        function verPerfilAlumno(id) {
-            const alumno = (db.alumnos || []).find(a => a.id === id);
-            if (alumno) {
-                localStorage.setItem('usuario', JSON.stringify({
-                    id: alumno.id,
-                    id_alumno: alumno.id,
-                    nombre: alumno.name.split(' ')[0] || alumno.name,
-                    apellido: alumno.name.split(' ').slice(1).join(' ') || '',
-                    nombreCompleto: alumno.name,
-                    usuario: alumno.username,
-                    rol: 'alumno'
-                }));
-                localStorage.setItem('isGuest', 'false');
-                window.location.href = 'alumno.html';
-            }
-        }
-
-        /* MATERIAS DENTRO DEL CURSO */
         function renderMateriasCurso() {
             const tbody = document.getElementById('materias-curso-tbody');
             if (!tbody || !selectedCurso) return;
             const asigs = (db.asignaciones || []).filter(a => a.cursoId === selectedCurso.id);
             if (asigs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500 italic border-b border-red-900/10">No hay materias asignadas en este curso.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-gray-500 italic border-b border-red-900/10">No hay materias asignadas.</td></tr>`;
                 return;
             }
-            tbody.innerHTML = asigs.map(a => {
-                const profeOptions = (db.profesores || []).map(pr => `<option value="${pr.id}" ${pr.id === a.profeId ? 'selected' : ''}>${pr.name}</option>`).join('');
-                return `
+            tbody.innerHTML = asigs.map(a => `
                 <tr class="hover:bg-red-900/10">
                     <td class="p-3 font-bold text-white">${a.materia}</td>
-                    <td class="p-3">
-                        <select onchange="cambiarProfeMateria('${a.id}', this.value)" class="bg-[#1a0505] border border-red-900/40 text-gray-300 text-xs rounded p-1.5 outline-none focus:border-red-500 w-full cursor-pointer">
-                            <option value="">-- Asignar Profesor --</option>
-                            ${profeOptions}
-                        </select>
-                    </td>
-                    <td class="p-3 text-right">
-                        <button onclick="eliminarAsignacion('${a.id}')" class="text-red-400 hover:text-red-300 p-1" title="Eliminar Asignación"><i data-lucide="trash" class="w-4 h-4"></i></button>
-                    </td>
+                    <td class="p-3 text-gray-300 text-xs">${a.profeId || '—'}</td>
+                    <td class="p-3 text-right"></td>
                 </tr>
-            `}).join('');
-            lucide.createIcons();
+            `).join('');
         }
 
-        async function abrirModalNuevaMateria() {
-            const materia = prompt('Nombre de la Materia (Ej: Base de datos, Matemática):');
-            if (!materia) return;
+        function abrirModalAlumno() {
+            document.getElementById('alumno-name').value = '';
+            document.getElementById('alumno-surname').value = '';
+            document.getElementById('alumno-usuario').value = '';
+            document.getElementById('alumno-pass').value = '123456';
+            const select = document.getElementById('alumno-curso');
+            if (select) {
+                select.innerHTML = db.cursos.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                if (selectedCurso) select.value = selectedCurso.id;
+            }
+            openModal('modal-alumno');
+        }
+
+        async function guardarAlumno() {
+            const nombre = document.getElementById('alumno-name').value.trim();
+            const apellido = document.getElementById('alumno-surname').value.trim();
+            const usuario = document.getElementById('alumno-usuario').value.trim();
+            const contrasena = document.getElementById('alumno-pass').value.trim() || '123456';
+            const id_curso = document.getElementById('alumno-curso')?.value || '1';
+
+            if (!nombre || !apellido) { showToast('Nombre y apellido son obligatorios', 'error'); return; }
+
+            const btn = document.querySelector("#modal-alumno button[onclick='guardarAlumno()']");
+            const original = btn.textContent;
+            btn.textContent = 'Guardando...';
+            btn.disabled = true;
 
             try {
-                let nextId = Date.now().toString();
-                try {
-                    const getResponse = await fetch("https://api.sheetbest.com/sheets/171942f5-7c2b-432c-8a2d-d2820c3e94db");
-                    if (getResponse.ok) {
-                        const currentData = await getResponse.json();
-                        const dataArray = Array.isArray(currentData) ? currentData : (currentData ? [currentData] : []);
-                        if (dataArray.length > 0) {
-                            const ids = dataArray.map(r => r && r.Id_materia ? parseInt(r.Id_materia) : 0).filter(id => !isNaN(id) && id > 0);
-                            if (ids.length > 0) nextId = (Math.max(...ids) + 1).toString();
-                        }
-                    }
-                } catch(e) {}
+                const r = await fetch(`${API}/alumnos`, {
+                    method: 'POST',
+                    headers: headers(),
+                    body: JSON.stringify({ nombre, apellido, usuario, contrasena, id_curso: parseInt(id_curso) })
+                });
+                const data = await r.json();
+                if (!r.ok) { showToast(data.mensaje || 'Error al crear alumno', 'error'); return; }
+                showToast(`✅ Alumno guardado en TiDB — Usuario: ${data.alumno?.usuario || usuario}`);
+                closeModal('modal-alumno');
+                await cargarAlumnos();
+                if (selectedCurso) renderAlumnosCurso();
+            } catch(e) {
+                showToast('Error de conexión con el servidor', 'error');
+            } finally {
+                btn.textContent = original;
+                btn.disabled = false;
+            }
+        }
 
-                const idCurso = parseInt(selectedCurso.id) || 1;
-                const nuevaAsigLocal = { id: nextId.toString(), cursoId: idCurso.toString(), materia, profeId: '' };
+        // ─── EDITAR ALUMNO (Modal interactivo) ───────────────────────────────
+        function abrirModalEditarAlumno(id) {
+            const a = db.alumnos.find(x => x.id_alumno === id || x.id_alumno === parseInt(id));
+            if (!a) return;
+            document.getElementById('edit-alumno-id').value = a.id_alumno;
+            document.getElementById('edit-alumno-nombre').value = a.nombre || '';
+            document.getElementById('edit-alumno-apellido').value = a.apellido || '';
+            document.getElementById('edit-alumno-usuario').value = a.usuario || '';
+            document.getElementById('edit-alumno-pass').value = a['contraseña'] || a.contrasena || a.password || '123456';
+            
+            const sel = document.getElementById('edit-alumno-curso');
+            if (sel) {
+                sel.innerHTML = db.cursos.map(c => `<option value="${c.id}" ${String(c.id) === String(a.id_curso) ? 'selected' : ''}>${c.name}</option>`).join('');
+            }
+            openModal('modal-editar-alumno');
+        }
 
-                try {
-                    await fetch("https://api.sheetbest.com/sheets/171942f5-7c2b-432c-8a2d-d2820c3e94db", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            Id_materia: nextId,
-                            Materia: materia,
-                            Id_curso: idCurso
-                        })
-                    });
-                } catch(e) {
-                    console.warn("SheetBest error:", e);
+        async function guardarEdicionAlumno() {
+            const id = document.getElementById('edit-alumno-id').value;
+            const nombre = document.getElementById('edit-alumno-nombre').value.trim();
+            const apellido = document.getElementById('edit-alumno-apellido').value.trim();
+            const usuario = document.getElementById('edit-alumno-usuario').value.trim();
+            const contrasena = document.getElementById('edit-alumno-pass').value.trim();
+            const id_curso = document.getElementById('edit-alumno-curso')?.value;
+
+            if (!usuario && !contrasena) { showToast('El usuario o la contraseña no pueden estar vacíos', 'error'); return; }
+
+            const body = { nombre, apellido, usuario, contrasena, id_curso: parseInt(id_curso) };
+
+            try {
+                const r = await fetch(`${API}/alumnos/${id}`, { method: 'PATCH', headers: headers(), body: JSON.stringify(body) });
+                const data = await r.json();
+                if (data.ok) {
+                    showToast('✅ Estudiante actualizado correctamente');
+                    closeModal('modal-editar-alumno');
+                    await cargarAlumnos();
+                    if (selectedCurso) renderAlumnosCurso();
+                } else {
+                    showToast(data.mensaje || 'Error al actualizar', 'error');
                 }
-
-                db.asignaciones.push(nuevaAsigLocal);
-                saveDB();
-                renderMateriasCurso();
-            } catch (error) {
-                console.error(error);
-                alert("Error al procesar la materia");
+            } catch(e) {
+                showToast('Error de conexión', 'error');
             }
         }
 
-        async function cambiarProfeMateria(asigId, newProfeId) {
-            const asig = (db.asignaciones || []).find(a => a.id === asigId);
-            if (asig) {
-                try {
-                    fetch(`https://api.sheetbest.com/sheets/171942f5-7c2b-432c-8a2d-d2820c3e94db/Id_materia/${asigId}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ Id_Profesor: newProfeId ? parseInt(newProfeId) : "" })
-                    }).catch(e => console.warn(e));
-
-                    if (newProfeId) {
-                        try {
-                            const relUrl = "https://api.sheetbest.com/sheets/0b08e439-4756-44c5-95ca-6ef58643e708";
-                            const targetMateriaId = asigId.toString();
-
-                            fetch(`${relUrl}/Id_materia/${targetMateriaId}`, {
-                                method: "PATCH",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    Id_Profesor: parseInt(newProfeId),
-                                    Id_curso: parseInt(selectedCurso.id),
-                                    Id_materia: parseInt(targetMateriaId)
-                                })
-                            }).catch(() => {});
-                        } catch (e) {}
-                    }
-
-                    asig.profeId = newProfeId;
-                    saveDB();
-                } catch (error) {
-                    console.error("Error al asignar profesor:", error);
-                }
+        async function eliminarAlumnoReal(id) {
+            if (!confirm('¿Eliminar alumno permanentemente de la base de datos?')) return;
+            const r = await fetch(`${API}/alumnos/${id}`, { method: 'DELETE', headers: headers() });
+            const data = await r.json();
+            if (data.ok) {
+                showToast('Alumno eliminado');
+                await cargarAlumnos();
+                if (selectedCurso) renderAlumnosCurso();
+            } else {
+                showToast(data.mensaje || 'Error', 'error');
             }
         }
 
-        function eliminarAsignacion(id) {
-            db.asignaciones = (db.asignaciones || []).filter(a => a.id !== id);
-            saveDB();
-            renderMateriasCurso();
-        }
+        function eliminarAlumno(id) { eliminarAlumnoReal(id); }
+        function eliminarAlumnoGeneral(id) { eliminarAlumnoReal(id); }
 
-        /* GESTION DE ALUMNOS (GENERAL) */
-        function renderAlumnos() {
-            const tbody = document.getElementById('alumnos-general-tbody');
-            if (!tbody) return;
-            if (!db.alumnos || db.alumnos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500 italic">No hay alumnos cargados.</td></tr>`;
-                return;
+        // ─── PROFESORES ───────────────────────────────────────────────────────
+        async function cargarProfesores() {
+            try {
+                const r = await fetch(`${API}/profesores`, { headers: headers() });
+                const data = await r.json();
+                db.profesores = data.profesores || [];
+            } catch(e) {
+                console.warn('Error cargando profesores:', e);
+                db.profesores = [];
             }
-            tbody.innerHTML = db.alumnos.map(a => {
-                const cursoOptions = (db.cursos || []).map(c => `<option value="${c.id}" ${c.id === a.cursoId ? 'selected' : ''}>${c.name}</option>`).join('');
-                return `
-                <tr class="hover:bg-red-900/10">
-                    <td class="p-4 font-bold text-white">${a.name}</td>
-                    <td class="p-4 text-red-300 font-mono text-xs">${a.username}</td>
-                    <td class="p-4">
-                        <div class="flex items-center gap-2">
-                            <span class="text-gray-400 font-mono tracking-widest text-xs" data-password="${a.password || '123456'}">••••••</span>
-                            <button onclick="toggleVisibility(this)" class="text-gray-400 hover:text-white transition-colors" title="Mostrar contraseña">
-                                <i data-lucide="eye" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                    </td>
-                    <td class="p-4">
-                        <select onchange="cambiarCursoAlumno('${a.id}', this.value)" class="bg-[#1a0505] border border-red-900/40 text-gray-300 text-xs rounded-lg px-2 py-1 outline-none focus:border-red-500 cursor-pointer">
-                            <option value="">Sin asignar</option>
-                            ${cursoOptions}
-                        </select>
-                    </td>
-                    <td class="p-4 text-right">
-                        <button onclick="eliminarAlumnoGeneral('${a.id}')" class="text-red-400 hover:bg-red-900/30 p-2 rounded transition" title="Eliminar Alumno"><i data-lucide="trash" class="w-4 h-4"></i></button>
-                    </td>
-                </tr>
-                `;
-            }).join('');
-            lucide.createIcons();
+            renderProfesores();
+            updateDashboard();
         }
 
-        function cambiarCursoAlumno(alumnoId, nuevoCursoId) {
-            const alumno = (db.alumnos || []).find(a => a.id === alumnoId);
-            if (alumno) {
-                alumno.cursoId = nuevoCursoId;
-                saveDB();
-                if (document.getElementById('sec-cursos') && !document.getElementById('sec-cursos').classList.contains('hidden') && typeof renderAlumnosCurso === 'function') {
-                    renderAlumnosCurso();
-                }
-            }
-        }
-
-        function eliminarAlumnoGeneral(id) {
-            if (confirm('¿Seguro que deseas eliminar a este alumno?')) {
-                db.alumnos = (db.alumnos || []).filter(a => a.id !== id);
-                saveDB();
-                renderAlumnos();
-                if (document.getElementById('sec-cursos') && !document.getElementById('sec-cursos').classList.contains('hidden') && typeof renderAlumnosCurso === 'function') {
-                    renderAlumnosCurso();
-                }
-            }
-        }
-
-        /* GESTION DE PROFESORES */
         function renderProfesores() {
             const tbody = document.getElementById('profes-tbody');
             if (!tbody) return;
             if (!db.profesores || db.profesores.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500 italic">No hay profesores cargados.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500 italic">No hay profesores registrados. Usá "Nuevo Docente" para agregar.</td></tr>`;
                 return;
             }
             tbody.innerHTML = db.profesores.map(p => `
                 <tr class="hover:bg-red-900/10">
-                    <td class="p-4 font-bold text-white">${p.name}</td>
-                    <td class="p-4 text-red-300 font-mono text-xs">${p.username}</td>
-                    <td class="p-4">
+                    <td class="p-4 font-bold text-white whitespace-nowrap">${p.nombre} ${p.apellido}</td>
+                    <td class="p-4 text-red-300 font-mono text-xs whitespace-nowrap">${p.usuario}</td>
+                    <td class="p-4 whitespace-nowrap">
                         <div class="flex items-center gap-2">
-                            <span class="text-gray-400 font-mono tracking-widest text-xs" data-password="${p.password || '123456'}">••••••</span>
+                            <span class="text-gray-400 font-mono tracking-widest text-xs" data-password="${p['contraseña'] || p.contrasena || '•••'}">••••••</span>
                             <button onclick="toggleVisibility(this)" class="text-gray-400 hover:text-white transition-colors" title="Mostrar contraseña">
                                 <i data-lucide="eye" class="w-4 h-4"></i>
                             </button>
                         </div>
                     </td>
-                    <td class="p-4 text-right">
-                        <button onclick="eliminarProfe('${p.id}')" class="text-red-400 hover:bg-red-900/30 p-2 rounded transition" title="Eliminar Profesor"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                    <td class="p-4 text-right whitespace-nowrap">
+                        <button onclick="abrirModalEditarProfe(${p.id_profesor})" class="text-blue-300 hover:text-white p-1 mr-1" title="Editar Docente"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                        <button onclick="eliminarProfeReal(${p.id_profesor})" class="text-red-400 hover:bg-red-900/30 p-2 rounded transition" title="Eliminar"><i data-lucide="trash" class="w-4 h-4"></i></button>
                     </td>
                 </tr>
             `).join('');
@@ -1136,85 +1065,170 @@
         function openModalProfe() {
             document.getElementById('profe-nombre').value = '';
             document.getElementById('profe-apellido').value = '';
+            document.getElementById('profe-usuario').value = '';
+            document.getElementById('profe-pass').value = '123456';
             openModal('modal-profe');
         }
 
         async function guardarProfe() {
             let nombre = document.getElementById('profe-nombre').value.trim();
             let apellido = document.getElementById('profe-apellido').value.trim();
-            if (!nombre || !apellido) return;
+            let usuario = document.getElementById('profe-usuario').value.trim();
+            let contrasena = document.getElementById('profe-pass').value.trim() || '123456';
+
+            if (!nombre || !apellido) { showToast('Nombre y apellido son obligatorios', 'error'); return; }
 
             const btn = document.querySelector("#modal-profe button[onclick='guardarProfe()']");
-            const originalText = btn.textContent;
-            btn.textContent = "Guardando...";
+            const original = btn.textContent;
+            btn.textContent = 'Guardando...';
             btn.disabled = true;
 
             try {
-                let nextId = Date.now().toString();
-                try {
-                    const getResponse = await fetch("https://api.sheetbest.com/sheets/0c643ea8-01eb-4d4c-8959-9f72cec0a99a");
-                    if (getResponse.ok) {
-                        const currentData = await getResponse.json();
-                        const dataArray = Array.isArray(currentData) ? currentData : (currentData ? [currentData] : []);
-                        if (dataArray.length > 0) {
-                            const ids = dataArray.map(r => {
-                                const idVal = r ? (r.Id_Profesor || r.Id_profesor) : null;
-                                return idVal ? parseInt(idVal) : 0;
-                            }).filter(id => !isNaN(id) && id > 0);
-                            if (ids.length > 0) nextId = (Math.max(...ids) + 1).toString();
-                        }
-                    }
-                } catch(e) {}
-
-                const capitalize = (str) => str.split(' ').map(w => w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : '').join(' ');
-                nombre = capitalize(nombre);
-                apellido = capitalize(apellido);
-
-                const name = `${nombre} ${apellido}`;
-                const username = `${nombre.toLowerCase()}.${apellido.toLowerCase()}`;
-                const password = Math.random().toString(36).slice(-6);
-
-                const nuevoProfeLocal = { id: nextId.toString(), name, username, password };
-
-                try {
-                    await fetch("https://api.sheetbest.com/sheets/0c643ea8-01eb-4d4c-8959-9f72cec0a99a", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            Id_Profesor: nextId,
-                            Nombre: nombre,
-                            Apellido: apellido,
-                            Usuario: username,
-                            Contraseña: password
-                        })
-                    });
-                } catch(e) {
-                    console.warn("SheetBest error:", e);
-                }
-
-                db.profesores.push(nuevoProfeLocal);
-                saveDB();
-                renderProfesores();
+                const r = await fetch(`${API}/profesores`, {
+                    method: 'POST',
+                    headers: headers(),
+                    body: JSON.stringify({ nombre, apellido, usuario, contrasena })
+                });
+                const data = await r.json();
+                if (!r.ok) { showToast(data.mensaje || 'Error al crear profesor', 'error'); return; }
+                showToast(`✅ Docente guardado en TiDB — Usuario: ${data.profesor?.usuario || usuario}`);
                 closeModal('modal-profe');
-            } catch (error) {
-                console.error(error);
-                alert("Error al procesar el docente");
+                await cargarProfesores();
+            } catch(e) {
+                showToast('Error de conexión con el servidor', 'error');
             } finally {
-                btn.textContent = originalText;
+                btn.textContent = original;
                 btn.disabled = false;
             }
         }
 
-        function eliminarProfe(id) {
-            if (confirm('¿Eliminar profesor? Perderá todas sus asignaciones.')) {
-                db.profesores = (db.profesores || []).filter(p => p.id !== id);
-                (db.asignaciones || []).forEach(a => { if (a.profeId === id) a.profeId = ''; });
-                saveDB();
-                renderProfesores();
+        // ─── EDITAR PROFESOR (Modal interactivo) ─────────────────────────────
+        function abrirModalEditarProfe(id) {
+            const p = db.profesores.find(x => x.id_profesor === id || x.id_profesor === parseInt(id));
+            if (!p) return;
+            document.getElementById('edit-profe-id').value = p.id_profesor;
+            document.getElementById('edit-profe-nombre').value = p.nombre || '';
+            document.getElementById('edit-profe-apellido').value = p.apellido || '';
+            document.getElementById('edit-profe-usuario').value = p.usuario || '';
+            document.getElementById('edit-profe-pass').value = p['contraseña'] || p.contrasena || '123456';
+            openModal('modal-editar-profe');
+        }
+
+        async function guardarEdicionProfe() {
+            const id = document.getElementById('edit-profe-id').value;
+            const nombre = document.getElementById('edit-profe-nombre').value.trim();
+            const apellido = document.getElementById('edit-profe-apellido').value.trim();
+            const usuario = document.getElementById('edit-profe-usuario').value.trim();
+            const contrasena = document.getElementById('edit-profe-pass').value.trim();
+
+            if (!usuario && !contrasena) { showToast('Usuario o contraseña no pueden estar vacíos', 'error'); return; }
+
+            const body = { nombre, apellido, usuario, contrasena };
+
+            try {
+                const r = await fetch(`${API}/profesores/${id}`, { method: 'PATCH', headers: headers(), body: JSON.stringify(body) });
+                const data = await r.json();
+                if (data.ok) {
+                    showToast('✅ Docente actualizado correctamente');
+                    closeModal('modal-editar-profe');
+                    await cargarProfesores();
+                } else {
+                    showToast(data.mensaje || 'Error al actualizar', 'error');
+                }
+            } catch(e) {
+                showToast('Error de conexión', 'error');
             }
         }
 
-        /* OCR SIMULADO */
+        async function eliminarProfeReal(id) {
+            if (!confirm('¿Eliminar profesor permanentemente?')) return;
+            const r = await fetch(`${API}/profesores/${id}`, { method: 'DELETE', headers: headers() });
+            const data = await r.json();
+            if (data.ok) { showToast('Profesor eliminado'); await cargarProfesores(); }
+            else showToast(data.mensaje || 'Error', 'error');
+        }
+
+        function eliminarProfe(id) { eliminarProfeReal(id); }
+
+        // ─── RESET TOTAL DE LA BASE DE DATOS ─────────────────────────────────
+        function abrirModalReset() {
+            openModal('modal-reset');
+        }
+
+        async function ejecutarResetBD() {
+            const btn = document.getElementById('btn-confirm-reset');
+            const original = btn.textContent;
+            btn.textContent = 'Limpiando base de datos...';
+            btn.disabled = true;
+
+            try {
+                const r = await fetch(`${API}/reset`, { method: 'POST', headers: headers() });
+                const data = await r.json();
+                if (data.ok) {
+                    localStorage.removeItem('adminDB');
+                    closeModal('modal-reset');
+                    showToast('✅ Base de datos limpia y reiniciada');
+                    await cargarCursos();
+                    await cargarProfesores();
+                    await cargarAlumnos();
+                    showSection('dashboard');
+                } else {
+                    showToast(data.mensaje || 'Error al reiniciar', 'error');
+                }
+            } catch(e) {
+                showToast('Error de conexión al reiniciar', 'error');
+            } finally {
+                btn.textContent = original;
+                btn.disabled = false;
+            }
+        }
+
+        // ─── ALUMNOS (sección general) ────────────────────────────────────────
+        async function cargarAlumnos() {
+            try {
+                const r = await fetch(`${API}/alumnos`, { headers: headers() });
+                const data = await r.json();
+                db.alumnos = data.alumnos || [];
+            } catch(e) {
+                console.warn('Error cargando alumnos:', e);
+                db.alumnos = [];
+            }
+            renderAlumnos();
+            updateDashboard();
+        }
+
+        function renderAlumnos() {
+            const tbody = document.getElementById('alumnos-general-tbody');
+            if (!tbody) return;
+            if (!db.alumnos || db.alumnos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500 italic">No hay alumnos registrados. Usá "Añadir Alumno" para agregar.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = db.alumnos.map(a => {
+                const cursoNombre = a.curso_nombre || db.cursos.find(c => c.id === String(a.id_curso))?.name || `Curso ${a.id_curso}`;
+                return `
+                <tr class="hover:bg-red-900/10">
+                    <td class="p-4 font-bold text-white whitespace-nowrap">${a.nombre} ${a.apellido}</td>
+                    <td class="p-4 text-red-300 font-mono text-xs whitespace-nowrap">${a.usuario}</td>
+                    <td class="p-4 whitespace-nowrap">
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-400 font-mono tracking-widest text-xs" data-password="${a['contraseña'] || a.contrasena || a.password || '•••'}">••••••</span>
+                            <button onclick="toggleVisibility(this)" class="text-gray-400 hover:text-white transition-colors" title="Mostrar contraseña">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td class="p-4 text-gray-300 text-xs whitespace-nowrap">${cursoNombre}</td>
+                    <td class="p-4 text-right whitespace-nowrap">
+                        <button onclick="abrirModalEditarAlumno(${a.id_alumno})" class="text-blue-300 hover:text-white p-1 mr-1" title="Editar Estudiante"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                        <button onclick="eliminarAlumnoReal(${a.id_alumno})" class="text-red-400 hover:bg-red-900/30 p-2 rounded transition" title="Eliminar"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // ─── OCR / CARGA MASIVA ───────────────────────────────────────────────
         function openModalOCR() {
             document.getElementById('ocr-text').value = '';
             document.getElementById('ocr-file').value = '';
@@ -1222,137 +1236,47 @@
         }
 
         function simularOCR() {
-            const names = ["Ana Martínez", "Bautista Rojas", "Clara Benítez", "Daniel Costa", "Elena Paz"];
-            document.getElementById('ocr-text').value = names.join(", ");
+            const names = ['Ana Martínez', 'Bautista Rojas', 'Clara Benítez'];
+            document.getElementById('ocr-text').value = names.join(', ');
         }
 
-        function procesarOCR() {
+        async function procesarOCR() {
             const text = document.getElementById('ocr-text').value.trim();
-            if (!text) { alert('Por favor ingresa nombres o sube una imagen.'); return; }
+            if (!text) { showToast('Por favor ingresá nombres.', 'error'); return; }
             const names = text.split(/,|\n/).map(n => n.trim()).filter(n => n.length > 2);
-
-            const targetCursoId = selectedCurso ? selectedCurso.id : (db.cursos[0]?.id || '1');
-
-            names.forEach(name => {
-                const username = name.toLowerCase().replace(/\s+/g, '.') + Math.floor(Math.random() * 100);
-                const password = Math.random().toString(36).slice(-6);
-                db.alumnos.push({ id: generateId(), name, username, password, cursoId: targetCursoId });
-            });
-
-            saveDB();
-            if (selectedCurso) renderAlumnosCurso();
-            renderAlumnos();
+            const targetCursoId = selectedCurso ? parseInt(selectedCurso.id) : 1;
+            let creados = 0;
+            for (const name of names) {
+                const partes = name.split(' ');
+                const nombre = partes[0] || name;
+                const apellido = partes.slice(1).join(' ') || nombre;
+                const usuario = name.toLowerCase().replace(/\s+/g, '.') + Math.floor(Math.random() * 100);
+                const pass = Math.random().toString(36).slice(-6);
+                try {
+                    const r = await fetch(`${API}/alumnos`, {
+                        method: 'POST',
+                        headers: headers(),
+                        body: JSON.stringify({ nombre, apellido, usuario, contrasena: pass, id_curso: targetCursoId })
+                    });
+                    if (r.ok) creados++;
+                } catch(e) {}
+            }
+            showToast(`✅ ${creados} de ${names.length} alumnos creados en la base de datos`);
             closeModal('modal-ocr');
-            alert(`¡Éxito! Se cargaron ${names.length} alumnos.`);
+            await cargarAlumnos();
+            if (selectedCurso) renderAlumnosCurso();
         }
 
-        async function loadDBFromSheets() {
-            try {
-                // Cargar Cursos
-                const cursosResponse = await fetch("https://api.sheetbest.com/sheets/b9647b39-eefd-4f1a-a379-50203e464f35");
-                if (cursosResponse.ok) {
-                    const data = await cursosResponse.json();
-                    if (data && Array.isArray(data) && data.length > 0) {
-                        const cursosNuevos = data.map(row => ({
-                            id: row.Id_curso ? row.Id_curso.toString() : generateId(),
-                            name: `${row.Año || ''} ${row.Division || ''} - ${row.Turno || ''}`.trim(),
-                            año: row.Año || '',
-                            division: row.Division || '',
-                            turno: row.Turno || ''
-                        })).filter(c => c.name !== '-' && c.name !== '');
-                        if (cursosNuevos.length > 0) db.cursos = cursosNuevos;
-                    }
-                }
-
-                // Cargar Alumnos
-                const alumnosResponse = await fetch("https://api.sheetbest.com/sheets/6464d1a7-1907-42c5-b871-4ae6f1ba8e85");
-                if (alumnosResponse.ok) {
-                    const alumnosData = await alumnosResponse.json();
-                    const alumnosArray = Array.isArray(alumnosData) ? alumnosData : (alumnosData ? [alumnosData] : []);
-                    if (alumnosArray.length > 0) {
-                        const alumnosNuevos = alumnosArray.map(row => ({
-                            id: row.Id_alumno ? row.Id_alumno.toString() : generateId(),
-                            name: `${row.Nombre || ''} ${row.Apellido || ''}`.trim(),
-                            username: row.Usuario || '',
-                            password: (row.Contraseña && row.Contraseña !== '••••••') ? row.Contraseña : '123456',
-                            cursoId: row.Id_curso ? row.Id_curso.toString() : ''
-                        })).filter(a => a.name !== '');
-                        if (alumnosNuevos.length > 0) db.alumnos = alumnosNuevos;
-                    }
-                }
-
-                // Cargar Profesores
-                const profesResponse = await fetch("https://api.sheetbest.com/sheets/0c643ea8-01eb-4d4c-8959-9f72cec0a99a");
-                if (profesResponse.ok) {
-                    const profesData = await profesResponse.json();
-                    const profesArray = Array.isArray(profesData) ? profesData : (profesData ? [profesData] : []);
-                    if (profesArray.length > 0) {
-                        const profesNuevos = profesArray.map(row => ({
-                            id: (row.Id_Profesor || row.Id_profesor) ? (row.Id_Profesor || row.Id_profesor).toString() : generateId(),
-                            name: `${row.Nombre || ''} ${row.Apellido || ''}`.trim(),
-                            username: row.Usuario || '',
-                            password: (row.Contraseña && row.Contraseña !== '••••••') ? row.Contraseña : '123456'
-                        })).filter(p => p.name !== '');
-                        if (profesNuevos.length > 0) db.profesores = profesNuevos;
-                    }
-                }
-
-                // Cargar Materias (Asignaciones)
-                const materiasResponse = await fetch("https://api.sheetbest.com/sheets/171942f5-7c2b-432c-8a2d-d2820c3e94db");
-                if (materiasResponse.ok) {
-                    const materiasData = await materiasResponse.json();
-                    const materiasArray = Array.isArray(materiasData) ? materiasData : (materiasData ? [materiasData] : []);
-                    if (materiasArray.length > 0) {
-                        const asigsNuevas = materiasArray.map(row => ({
-                            id: row.Id_materia ? row.Id_materia.toString() : generateId(),
-                            cursoId: row.Id_curso ? row.Id_curso.toString() : '',
-                            materia: row.Materia || '',
-                            profeId: row.Id_Profesor ? row.Id_Profesor.toString() : ''
-                        })).filter(m => m.materia !== '');
-                        if (asigsNuevas.length > 0) db.asignaciones = asigsNuevas;
-                    }
-                }
-
-                saveDB();
-            } catch (error) {
-                console.warn("Carga desde SheetBest completada o usando respaldo local:", error);
-            }
-        }
-
-        // Toggle Password Visibility
-        function toggleVisibility(btn) {
-            const span = btn.previousElementSibling;
-            if (!span) return;
-            const pwd = (span.dataset.password && span.dataset.password !== '••••••') ? span.dataset.password : '123456';
-            const isHidden = span.textContent === '••••••';
-            span.textContent = isHidden ? pwd : '••••••';
-            span.style.letterSpacing = isHidden ? 'normal' : '0.2em';
-            span.classList.toggle('text-white', isHidden);
-            span.classList.toggle('text-gray-400', !isHidden);
-            const iconSize = btn.closest('td')?.classList.contains('p-3') ? 'w-3 h-3' : 'w-4 h-4';
-            btn.innerHTML = `<i data-lucide="${isHidden ? 'eye-off' : 'eye'}" class="${iconSize}"></i>`;
+        // ─── INICIALIZACIÓN ───────────────────────────────────────────────────
+        async function init() {
             lucide.createIcons();
+            await cargarCursos();
+            await cargarProfesores();
+            await cargarAlumnos();
+            showSection('dashboard');
         }
 
-        // Inicialización
-        lucide.createIcons();
-        showSection('dashboard');
-
-        // Cargar datos al inicio
-        loadDBFromSheets().then(() => {
-            if (!document.getElementById('sec-cursos').classList.contains('hidden')) {
-                renderCursosGrid();
-            }
-            if (!document.getElementById('sec-profesores').classList.contains('hidden')) {
-                renderProfesores();
-            }
-            if (!document.getElementById('sec-alumnos').classList.contains('hidden')) {
-                renderAlumnos();
-            }
-            if (!document.getElementById('sec-dashboard').classList.contains('hidden')) {
-                updateDashboard();
-            }
-        });
+        init();
     </script>
 </body>
 
